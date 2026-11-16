@@ -37,7 +37,7 @@ Este projeto faz parte da pasta `Desenvolvimento/`, que reúne os sistemas do
 ```
 /
 ├── index.html              ← o sistema (cópia fiel de "01 Sistema/compras-isv.html")
-├── CNAME                   ← (a criar no deploy) compras.institutosaovicente.com.br
+├── CNAME                   ← compras.institutosaovicente.com.br (GitHub Pages, publicado em 2026-11-16)
 ├── docs/
 │   ├── documentacao-tecnica.md
 │   ├── LEIA-ME-pacote.md   ← leia-me original do pacote de entrega

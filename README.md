@@ -2,7 +2,8 @@
 
 Sistema de solicitações de compras do Instituto São Vicente (ISV).
 
-- **Endereço:** https://compras.institutosaovicente.com.br/ (em configuração)
+- **Endereço:** https://compras.institutosaovicente.com.br/
+- **Repositório:** `tecnologiadainformacaoisv/sistema-compras` (GitHub Pages, branch `master`)
 - **Documentação técnica:** [docs/documentacao-tecnica.md](docs/documentacao-tecnica.md)
 - **Manuais de uso:** [docs/manuais/](docs/manuais/)
 
