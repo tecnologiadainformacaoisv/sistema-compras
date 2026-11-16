@@ -1,0 +1,11 @@
+# Dados reais (LGPD): banco exportado, anexos, lista de usuários. NUNCA versionar.
+dados/
+
+# Entrega original da desenvolvedora (zip + arquivos soltos), guardada só localmente
+_entrega-original/
+
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+~$*

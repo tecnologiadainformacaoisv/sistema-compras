@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Painel de Suprimentos em quadro</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F5F7FA}
+a{color:#1F5FBF}a:hover{color:#16233A}
+</style>
+</helmet>
+<div style="min-height: 980px; box-sizing: border-box; background: #F5F7FA; color: #16233A; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px; padding: 24px 28px 40px; display: flex; flex-direction: column; gap: 16px">
+
+  <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+    <h1 style="margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.01em">Painel de Suprimentos</h1>
+    <div role="group" aria-label="Modo de visualização" style="display: flex; background: #E3E8F0; border-radius: 10px; padding: 3px; gap: 2px">
+      <button type="button" style="border: 0; border-radius: 8px; padding: 8px 16px; font: inherit; font-weight: 600; background: #FFFFFF; color: #16233A; box-shadow: 0 1px 2px rgba(22,35,58,.15); min-height: 36px">Quadro</button>
+      <button type="button" style="border: 0; border-radius: 8px; padding: 8px 16px; font: inherit; font-weight: 500; background: transparent; color: #4A566C; min-height: 36px">Lista</button>
+    </div>
+    <div style="flex-grow: 1"></div>
+    <button type="button" style="border: 1px solid #C9D2E0; background: #FFFFFF; border-radius: 10px; padding: 9px 16px; font: inherit; font-weight: 600; color: #16233A; min-height: 40px">Exportar lista (CSV)</button>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; background: #FFFFFF; border: 1px solid #DCE2EB; border-radius: 12px; padding: 12px 14px">
+    <label style="display: flex; flex-direction: column; gap: 4px; flex: 2 1 240px; font-size: 12px; font-weight: 600; color: #4A566C">Buscar<input placeholder="Protocolo, solicitante, item…" style="font: inherit; font-size: 14px; font-weight: 400; padding: 9px 12px; border: 1px solid #C9D2E0; border-radius: 8px; color: #16233A"></label>
+    <label style="display: flex; flex-direction: column; gap: 4px; flex: 1 1 150px; font-size: 12px; font-weight: 600; color: #4A566C">Município<select style="font: inherit; font-size: 14px; font-weight: 400; padding: 9px 10px; border: 1px solid #C9D2E0; border-radius: 8px; background: #FFFFFF; color: #16233A"><option>Todos</option></select></label>
+    <label style="display: flex; flex-direction: column; gap: 4px; flex: 1 1 150px; font-size: 12px; font-weight: 600; color: #4A566C">Categoria<select style="font: inherit; font-size: 14px; font-weight: 400; padding: 9px 10px; border: 1px solid #C9D2E0; border-radius: 8px; background: #FFFFFF; color: #16233A"><option>Todas</option></select></label>
+    <label style="display: flex; flex-direction: column; gap: 4px; flex: 1 1 150px; font-size: 12px; font-weight: 600; color: #4A566C">Responsável<select style="font: inherit; font-size: 14px; font-weight: 400; padding: 9px 10px; border: 1px solid #C9D2E0; border-radius: 8px; background: #FFFFFF; color: #16233A"><option>Todos</option></select></label>
+    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: #16233A; min-height: 40px"><input type="checkbox" style="width: 18px; height: 18px">Só emergenciais</label>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px">
+    <span style="font-weight: 600; color: #4A566C">Saldo dos tetos · novembro:</span>
+    <span style="background: #E6F4E8; color: #1E6B2E; border-radius: 999px; padding: 4px 10px; font-weight: 600">Expediente · Orós: R$ 1.200 livres</span>
+    <span style="background: #FFF3DE; color: #8A5200; border-radius: 999px; padding: 4px 10px; font-weight: 600">Limpeza · Lavras: R$ 310 livres</span>
+    <span style="background: #FCE8E6; color: #9C1F17; border-radius: 999px; padding: 4px 10px; font-weight: 600">EPIs · Orós · UBS: esgotado</span>
+    <a href="#" style="font-weight: 600">ver todos</a>
+  </div>
+
+  <div style="overflow-x: auto; padding-bottom: 8px">
+    <div style="display: flex; gap: 14px; align-items: flex-start; min-width: min-content">
+      <sc-for list="{{colunas}}" as="col" hint-placeholder-count="6">
+        <section style="flex: 0 0 286px; background: #E9EDF3; border-radius: 14px; display: flex; flex-direction: column; max-height: 820px">
+          <div style="{{col.topo}}"></div>
+          <div style="display: flex; align-items: center; gap: 8px; padding: 12px 14px 8px">
+            <h2 style="margin: 0; font-size: 14px; font-weight: 700">{{col.nome}}</h2>
+            <span style="background: #FFFFFF; border-radius: 999px; padding: 1px 9px; font-size: 12px; font-weight: 700; color: #4A566C">{{col.qtd}}</span>
+            <span style="flex-grow: 1"></span>
+            <span style="font-size: 12px; color: #4A566C; font-weight: 500">{{col.total}}</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 10px; padding: 4px 10px 12px; overflow-y: auto">
+            <sc-for list="{{col.cards}}" as="c" hint-placeholder-count="2">
+              <article style="background: #FFFFFF; border-radius: 10px; border: 1px solid #DCE2EB; box-shadow: 0 1px 2px rgba(22,35,58,.06); padding: 12px; display: flex; flex-direction: column; gap: 8px; cursor: pointer">
+                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap">
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #4A566C">{{c.protocolo}}</span>
+                  <sc-if value="{{c.novo}}" hint-placeholder-val="{{false}}"><span style="background: #1F5FBF; color: #FFFFFF; border-radius: 4px; padding: 1px 6px; font-size: 10px; font-weight: 700; letter-spacing: .04em">NOVO</span></sc-if>
+                  <sc-if value="{{c.emerg}}" hint-placeholder-val="{{false}}"><span style="background: #FCE8E6; color: #9C1F17; border-radius: 4px; padding: 1px 6px; font-size: 10px; font-weight: 700; letter-spacing: .04em">EMERGENCIAL</span></sc-if>
+                </div>
+                <div style="font-weight: 600; font-size: 14px; line-height: 1.3">{{c.categoria}}</div>
+                <div style="font-size: 12.5px; color: #4A566C; line-height: 1.4">{{c.solicitante}} · {{c.unidade}}</div>
+                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12px">
+                  <span style="background: #F1F4F8; border-radius: 6px; padding: 2px 7px; color: #16233A">{{c.itens}} itens</span>
+                  <span style="{{c.prazoEstilo}}">{{c.prazo}}</span>
+                  <sc-for list="{{c.selos}}" as="s" hint-placeholder-count="1"><span style="{{s.estilo}}">{{s.txt}}</span></sc-for>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; border-top: 1px solid #EEF1F5; padding-top: 8px">
+                  <span style="font-size: 12px; color: #4A566C; flex-grow: 1">{{c.rodape}}</span>
+                  <span aria-label="Responsável: {{c.respNome}}" title="{{c.respNome}}" style="width: 26px; height: 26px; border-radius: 50%; background: #002060; color: #FFFFFF; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{c.resp}}</span>
+                </div>
+              </article>
+            </sc-for>
+          </div>
+        </section>
+      </sc-for>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":980}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const chip = (bg, fg) => `background: ${bg}; color: ${fg}; border-radius: 6px; padding: 2px 7px; font-weight: 600`;
+    const ok = chip('#E6F4E8', '#1E6B2E'), warn = chip('#FFF3DE', '#8A5200'), bad = chip('#FCE8E6', '#9C1F17'), info = chip('#E7EFFC', '#1A4FA0');
+    const topo = c => `height: 5px; border-radius: 14px 14px 0 0; background: ${c}`;
+    const card = (o) => Object.assign({ novo: false, emerg: false, selos: [], resp: 'JF', respNome: 'Joana Freitas', rodape: '' }, o);
+    const colunas = [
+      { nome: 'Recebida', qtd: 3, total: '', topo: topo('#1F5FBF'), cards: [
+        card({ protocolo: 'SC-20261105-K3P1', novo: true, emerg: true, categoria: 'Material de limpeza e descartáveis', solicitante: 'Eugenia', unidade: 'Orós · CAPS', itens: 12, prazo: 'vence amanhã', prazoEstilo: warn, resp: '—', respNome: 'Sem responsável', rodape: 'Recebida hoje, 09:12', selos: [{ txt: '♻ 4 já cotados', estilo: ok }] }),
+        card({ protocolo: 'SC-20261104-W5DE', novo: true, categoria: 'Material de expediente', solicitante: 'David Adley', unidade: 'Lavras · Hospital', itens: 8, prazo: 'vence 11/11', prazoEstilo: info, resp: '—', respNome: 'Sem responsável', rodape: 'Recebida ontem, 16:40' }),
+        card({ protocolo: 'SC-20261104-HU72', categoria: 'T.I. – Informática', solicitante: 'Lucas Holanda', unidade: 'ISV · Escritório · TI', itens: 2, prazo: 'vence 10/11', prazoEstilo: info, resp: '—', respNome: 'Sem responsável', rodape: 'Com ofício', selos: [{ txt: '📄 ofício', estilo: info }] })
+      ]},
+      { nome: 'Em análise', qtd: 2, total: '', topo: topo('#B26A00'), cards: [
+        card({ protocolo: 'SC-20261103-0MN6', categoria: 'EPIs', solicitante: 'Kyllman Oliveira', unidade: 'Orós · UBS', itens: 3, prazo: 'atrasado 1 dia', prazoEstilo: bad, rodape: 'Analisando planilha' }),
+        card({ protocolo: 'SC-20261103-R2LW', categoria: 'Fardamento', solicitante: 'Andreza Pessoa', unidade: 'Lavras · NAIA', itens: 2, prazo: 'vence hoje', prazoEstilo: warn, resp: 'KS', respNome: 'Késsia', rodape: 'Corrigida pelo solicitante', selos: [{ txt: 'Corrigida', estilo: info }] })
+      ]},
+      { nome: 'Aprovada', qtd: 1, total: '', topo: topo('#2E7D3A'), cards: [
+        card({ protocolo: 'SC-20261102-T9FA', emerg: true, categoria: 'Medicamento e MMH', solicitante: 'Aline Gonçalves', unidade: 'Orós · Hospital', itens: 3, prazo: 'vence hoje', prazoEstilo: warn, rodape: 'Aguardando envio p/ cotação' })
+      ]},
+      { nome: 'Em cotação', qtd: 2, total: '3 fornecedores', topo: topo('#7A4CC2'), cards: [
+        card({ protocolo: 'SC-20261027-B3XH', categoria: 'Material de expediente', solicitante: 'Josy Torquato', unidade: 'Orós · UBS', itens: 8, prazo: 'retorno até 06/11', prazoEstilo: info, rodape: '3 de 3 respostas · R$ 1.859,40', selos: [{ txt: 'Empate (3)', estilo: info }, { txt: 'CND ⚠', estilo: warn }] }),
+        card({ protocolo: 'SC-20261024-PQ81', categoria: 'Gêneros alimentícios', solicitante: 'Leandro Nonato', unidade: 'Lavras · Hospital', itens: 3, prazo: 'retorno até 07/11', prazoEstilo: info, resp: 'KS', respNome: 'Késsia', rodape: '1 de 2 respostas', selos: [{ txt: 'Sem saldo', estilo: bad }] })
+      ]},
+      { nome: 'Comprada', qtd: 2, total: 'R$ 4.320,10', topo: topo('#002060'), cards: [
+        card({ protocolo: 'SC-20261019-K7Q2', categoria: 'Material de limpeza e descartáveis', solicitante: 'Ranniele Araujo', unidade: 'Orós · UBS', itens: 6, prazo: 'entrega até 07/11', prazoEstilo: info, rodape: 'Autorização 2 de 2 enviadas', selos: [{ txt: '📋 4 de 6 conferidos', estilo: ok }, { txt: '1 divergência', estilo: bad }] }),
+        card({ protocolo: 'SC-20261018-AB12', categoria: 'Equipamentos em geral', solicitante: 'Guilherme Galdino', unidade: 'Lavras · UBS', itens: 2, prazo: 'entrega até 12/11', prazoEstilo: info, rodape: 'Autorização 1 de 1 enviada', selos: [{ txt: 'Aguardando entrega', estilo: info }] })
+      ]},
+      { nome: 'Entregue', qtd: 1, total: 'R$ 980,00', topo: topo('#1E6B2E'), cards: [
+        card({ protocolo: 'SC-20261012-ZZ90', categoria: 'Material de expediente', solicitante: 'Everton Ferreira', unidade: 'Orós · CEO', itens: 5, prazo: 'concluído 03/11', prazoEstilo: ok, rodape: 'Conferência completa', selos: [{ txt: '📋 5 de 5', estilo: ok }] })
+      ]},
+      { nome: 'Devolvida / Cancelada', qtd: 1, total: '', topo: topo('#B3261E'), cards: [
+        card({ protocolo: 'SC-20261028-R2LW', categoria: 'Fardamento', solicitante: 'Andreza Pessoa', unidade: 'Lavras · NAIA', itens: 2, prazo: 'aguardando correção', prazoEstilo: bad, rodape: '“Informar tamanhos dos jalecos”', selos: [{ txt: 'Devolvida', estilo: bad }] })
+      ]}
+    ];
+    return { colunas };
+  }
+}
+</script>
+</body>
+</html>
