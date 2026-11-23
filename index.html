@@ -1999,8 +1999,9 @@ async function carregarPdfLib(){
   return window.PDFLib;
 }
 async function lerPartes(base, partes){
-  let b64=""; for(let i=0;i<partes;i++){ const d=await db.doc(`${base}/partes/${i}`).get(); if(!d.exists) throw new Error("parte"); b64+=d.data().b64; }
-  const bin=atob(b64), u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); return u;
+  const ds=await Promise.all(Array.from({length:partes},(_,i)=>db.doc(`${base}/partes/${i}`).get()));
+  if(ds.some(d=>!d.exists)) throw new Error("parte");
+  const bin=atob(ds.map(d=>d.data().b64).join("")), u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); return u;
 }
 const semEmoji = s => String(s??"").replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}]/gu,"").replace(/[“”]/g,'"').replace(/[‘’]/g,"'").replace(/[–—]/g,"-").replace(/…/g,"...");
 async function dadosProcesso(p){
@@ -2069,7 +2070,7 @@ async function anexosProcesso(p, D){
 }
 async function anexarPdf(PDFLib, out, item, rodape){
   const {StandardFonts, rgb}=PDFLib; const font=await out.embedFont(StandardFonts.Helvetica);
-  let bytes; try{ bytes=await lerPartes(item.base, item.meta.partes); }catch(e){ return `${item.titulo}: arquivo não encontrado`; }
+  let bytes; try{ bytes=await (item.pre || lerPartes(item.base, item.meta.partes)); }catch(e){ return `${item.titulo}: arquivo não encontrado`; }
   const tipo=String(item.meta.tipo||"").toLowerCase(), nome=String(item.meta.nome||"").toLowerCase();
   try{
     if(tipo.includes("pdf") || nome.endsWith(".pdf")){
@@ -2091,6 +2092,7 @@ async function montarProcessoPdf(J, PDFLib, out, p, rodape){
   if(resumo.lastAutoTable && resumo.lastAutoTable.finalY>250) resumo.addPage();
   resumo.autoTable({startY:(resumo.lastAutoTable&&resumo.lastAutoTable.finalY>250)?14:(resumo.lastAutoTable?resumo.lastAutoTable.finalY+6:20), theme:"grid", margin:{left:14,right:14}, styles:{fontSize:8, cellPadding:1.4}, headStyles:{fillColor:[0,32,96], textColor:255}, head:[["7. Documentos anexados a seguir"]], body:lista.map(t=>[semEmoji(t)])});
   const src=await PDFLib.PDFDocument.load(resumo.output("arraybuffer")); const pages=await out.copyPages(src, src.getPageIndices()); pages.forEach(pg=>out.addPage(pg));
+  anexos.forEach(a=>{ a.pre=lerPartes(a.base, a.meta.partes); a.pre.catch(()=>{}); }); // baixa todos os anexos em paralelo; a montagem segue em ordem
   const falhas=[]; for(const a of anexos){ const f=await anexarPdf(PDFLib, out, a, rodape); if(f) falhas.push(f); }
   return {D, falhas};
 }
