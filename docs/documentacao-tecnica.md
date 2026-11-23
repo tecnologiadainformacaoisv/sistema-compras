@@ -63,7 +63,7 @@ Recebida → Em análise → (Devolvida para correção) → Aprovada → Em cot
 
 ### 2.3 Fornecedores
 - Cadastro com nome, **CNPJ** (dígitos verificadores + duplicidade), WhatsApp e/ou e-mail, contato e categorias atendidas.
-- **Cadastro sumário** (Regulamento, Art. 21), campos em `CAD_CAMPOS`: nome fantasia, regime, inscrição, pagamento, endereço, bairro, CEP, cidade, UF, banco, agência, conta, PIX.
+- **Cadastro sumário** (Regulamento, Art. 21), campos em `CAD_CAMPOS`: nome fantasia, pagamento, endereço, bairro, CEP, cidade, UF, banco, agência, conta, PIX.
 - **Preenchimento automático:**
   - **Buscar dados**: `GET https://brasilapi.com.br/api/cnpj/v1/{cnpj}`. Pode ser bloqueado no ambiente atual; nesse caso a página mostra o link da Receita.
   - **Cartão CNPJ (PDF)**: lido com pdf.js pela posição dos rótulos; se falhar (PDF escaneado), lê com o Claude (`sample`). O PDF é guardado no cadastro.
@@ -207,7 +207,7 @@ data/suprimentos/protocolos/<id>                protocolos enviados à Controlad
 **Fornecedor** `data/suprimentos/fornecedores/<fid>`
 ```js
 { nome, cnpj, whatsapp, email, contato, categorias: [],
-  cadastro: {fantasia, regime, inscricao, pagamento, endereco, bairro, cep, cidade, uf, banco, agencia, conta, pix},
+  cadastro: {fantasia, pagamento, endereco, bairro, cep, cidade, uf, banco, agencia, conta, pix},
   certidoes: { <tipo>: {emissao, validade, situacao, validadeEstimada, cnpjConfere, municipio?,
                         arquivo: {nome, tamanho, partes}, conferidoEm, porNome, origem} },
   impedimento: {motivo, relatorio, em, porNome} | null, impedimentosAnteriores: [],

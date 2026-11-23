@@ -177,9 +177,6 @@ main .wrap.largo{max-width:none}
 .kfoot{display:flex;align-items:center;gap:8px;border-top:1px solid var(--line);padding-top:8px;font-size:.78rem;color:var(--muted)}
 .kfoot span:first-child{flex-grow:1;overflow-wrap:anywhere}
 .kav{width:26px;height:26px;flex:0 0 26px;border-radius:50%;background:var(--navy);color:#fff;font-size:.68rem;font-weight:700;display:flex;align-items:center;justify-content:center}
-.cadsum{border:1px solid var(--line);border-radius:10px;padding:10px 14px}
-.cadsum summary{cursor:pointer;font-weight:600}
-.cadsum[open] summary{margin-bottom:10px}
 .urg{color:var(--bad);font-weight:700;font-size:.78rem;text-transform:uppercase;letter-spacing:.05em}
 .summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
 .sum{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;cursor:pointer;text-align:left;font:inherit;color:inherit}
@@ -778,8 +775,9 @@ function cardHtml(p){
   if(corrigida(p)) selos.push(`<span class="kc info">Corrigida</span>`);
   if(a.recebimento){ const r=resumoConf(p); if(r&&r.feitos) selos.push(`<span class="kc ${r.div?"bad":"ok"}">📋 ${r.feitos} de ${r.tot}${r.div?` · ${r.div} diverg.`:""}</span>`); else selos.push(`<span class="kc info">📋 lista liberada</span>`); }
   if(s==="cancelada") selos.push(`<span class="kc bad">Cancelada</span>`);
+  if(a.concluidoEm) selos.push(`<span class="kc ok">✔ concluída</span>`);
   const nota=ultimaNota(p), rod = nota ? `“${esc(nota.nota.length>70?nota.nota.slice(0,70)+"…":nota.nota)}”` : a.em ? `Atualizado ${fmtData(a.em)}` : `Recebida ${fmtData(p.criadoEm)}`;
-  return `<article class="kcard" tabindex="0" draggable="true" data-open="${esc(p.id)}" data-card="${esc(p.id)}" aria-label="${esc(p.protocolo)} · ${esc(catBase(p.categoria))}">
+  return `<article class="kcard" tabindex="0" data-open="${esc(p.id)}" data-card="${esc(p.id)}" aria-label="${esc(p.protocolo)} · ${esc(catBase(p.categoria))}">
     <div class="kline"><span class="mono kprot">${esc(p.protocolo)}</span>${canAdmin&&ehNovo(p)?'<span class="ktag new">NOVO</span>':""}${p.tipo==="Emergencial"?'<span class="ktag urg">EMERGENCIAL</span>':""}</div>
     <div class="ktit">${esc(catBase(p.categoria))}</div>
     <div class="ksub">${esc(p.nome)} · ${esc(p.unidade||"")}${p.setor?` · ${esc(p.setor)}`:""}</div>
@@ -794,14 +792,8 @@ function renderBoard(rows){
     return `<section class="kcol" data-col="${c.id}" aria-label="${esc(c.l)}"><div class="ktopo" style="background:${c.cor}"></div>
       <div class="khead"><h3>${esc(c.l)}</h3><span class="kcount">${cs.length}</span></div>
       <div class="kcards">${cs.map(cardHtml).join("")||'<span class="hint kvazio">Nenhum pedido</span>'}</div></section>`; }).join("")}</div>
-    <span class="hint">Clique num cartão para abrir o pedido. Arraste o cartão para outra coluna para mudar a situação (Devolvida e Cancelada abrem o pedido para escrever o motivo).</span>`;
+    <span class="hint">Clique num cartão para abrir o pedido. A situação muda sozinha conforme o andamento; para devolver ou cancelar, abra o pedido.</span>`;
   bindOpen(el);
-  // arrastar e soltar
-  el.querySelectorAll("[data-card]").forEach(c=>{ c.ondragstart=e=>{ e.dataTransfer.setData("text/plain", c.dataset.card); e.dataTransfer.effectAllowed="move"; c.classList.add("drag"); }; c.ondragend=()=>c.classList.remove("drag"); });
-  el.querySelectorAll("[data-col]").forEach(col=>{
-    col.ondragover=e=>{ e.preventDefault(); col.classList.add("over"); }; col.ondragleave=()=>col.classList.remove("over");
-    col.ondrop=e=>{ e.preventDefault(); col.classList.remove("over"); const p=pedidos.find(x=>x.id===e.dataTransfer.getData("text/plain")); if(p) moverCard(p, col.dataset.col); };
-  });
 }
 async function moverCard(p, colId){
   const atual=statusOf(p); if(colDe(atual)===colId) return;
@@ -920,12 +912,12 @@ function renderDrawer(){
     ${canAdmin?blocoEnvio(p,a):""}
     ${canAdmin?blocoMapaResumo(p):""}
     ${blocoRecebimento(p,a)}
-    ${canAdmin?`<div class="panel" style="gap:8px"><div class="row"><h3>Processo da compra</h3><span class="spacer"></span><button type="button" class="btn azul" id="dProcesso">Baixar processo completo (PDF)</button></div><span class="hint">PDF com a solicitação, o mapa de cotação, a homologação, os pedidos de compra, a regularidade dos fornecedores, o recebimento e o histórico, seguido dos anexos: ofício, propostas timbradas, certidões dos vencedores e notas fiscais atestadas (Regulamento, Art. 7º).</span></div>`:""}
-    ${canAdmin?`<div class="panel" style="gap:10px"><h3>Atualizar situação</h3>
-      <div class="grid"><label class="f">Nova situação<select id="newStatus">${ORDER.map(k=>`<option value="${k}"${k===s?" selected":""}>${STATUS[k].l}</option>`).join("")}</select></label>
+    ${canAdmin?`<div class="panel" style="gap:8px"><div class="row"><h3>Processo da compra</h3><span class="spacer"></span><button type="button" class="btn azul" id="dProcesso">Baixar processo completo (PDF)</button></div>${etapasProcesso(p,a,s)}<span class="hint">PDF com a solicitação, o mapa de cotação, a homologação, os pedidos de compra, a regularidade dos fornecedores, o recebimento e o histórico, seguido dos anexos: ofício, propostas timbradas, certidões dos vencedores e notas fiscais atestadas (Regulamento, Art. 7º).</span></div>`:""}
+    ${canAdmin&&s!=="cancelada"?`<div class="panel" style="gap:10px"><h3>Devolver ou cancelar</h3><span class="hint">As demais situações mudam sozinhas conforme o andamento do pedido.</span>
+      <div class="grid"><label class="f">Ação<select id="newStatus"><option value="">Escolha…</option><option value="devolvida"${s==="devolvida"?" selected":""}>Devolvida para correção</option><option value="cancelada">Cancelada</option></select></label>
         <label class="f">Assistente responsável<input id="newResp" value="${esc(a.responsavel||meuNome)}" placeholder="Nome de quem cuida da demanda"></label></div>
       <label class="f">Recado para o solicitante<textarea id="newNota" placeholder="O solicitante vê este recado. Obrigatório ao devolver. Ex.: cotação enviada a 3 fornecedores, previsão de entrega na sexta."></textarea></label>
-      <div class="row"><span class="hint" id="stMsg"></span><span class="spacer"></span><button class="btn navy" id="saveStatus">Salvar situação</button></div></div>`:""}
+      <div class="row"><span class="hint" id="stMsg"></span><span class="spacer"></span><button class="btn navy" id="saveStatus">Confirmar</button></div></div>`:""}
     <div class="panel" style="gap:10px"><h3>Histórico</h3>
       <ul class="timeline">${hist.map(h=>`<li><div><b>${esc(STATUS[h.status]?.l||h.status)}</b> <span class="when">· ${fmtData(h.em)}${h.porNome?" · "+esc(h.porNome):""}</span>${h.nota?`<div>${esc(h.nota)}</div>`:""}</div></li>`).join("")}
       <li><div><b>Recebida</b> <span class="when">· ${fmtData(p.criadoEm)} · enviada por ${esc(p.nome)}</span></div></li></ul>
@@ -940,10 +932,30 @@ function renderDrawer(){
   const sv=$("#saveStatus"); if(sv) sv.onclick=()=>saveStatus(p);
   const br=$("#baixarReceb"); if(br) br.onclick=()=>baixarRecebimento(p);
   ligarConferencia(p); ligarNotas(p);
-  if(canAdmin){ const dp=$("#dProcesso"); if(dp) dp.onclick=()=>baixarProcesso(p); ligarEnvio(p); ligarVigentes(p); const am=$("#abrirMapa"); if(am) am.onclick=()=>abrirMapa(p, !cot.respostas.length); }
+  if(canAdmin){ const bc=$("#concluirCompra"); if(bc) bc.onclick=()=>concluirCompra(p); const dp=$("#dProcesso"); if(dp) dp.onclick=()=>baixarProcesso(p); ligarEnvio(p); ligarVigentes(p); const am=$("#abrirMapa"); if(am) am.onclick=()=>abrirMapa(p, !cot.respostas.length); }
+}
+// etapas do processo da compra (só leitura, calculadas do andamento) + botão Concluir
+function etapasProcesso(p, a, s){
+  const H=homolog[p.id], rc=resumoConf(p), temNF=s==="entregue";
+  const idx=TRILHA.indexOf(s);
+  const E=[["Solicitação recebida",true],["Em análise / aprovada",idx>=2||s==="comprada"],["Cotação e mapa",idx>=3||(cot&&cot.respostas&&cot.respostas.length>0&&idx>=0&&s!=="recebida"&&s!=="analise")],["Mapa homologado",!!(H&&H.status==="homologado")],["Comprada",["comprada","pendencia","entregue"].includes(s)],["Recebimento conferido",!!(rc&&rc.completo)],["Prestação de contas OK (nota fiscal)",temNF]];
+  const conc=a.concluidoEm;
+  return `<ul class="timeline">${E.map(([t,ok])=>`<li><div>${ok?"✅":"⬜"} ${esc(t)}</div></li>`).join("")}</ul>
+    <div class="row">${conc?`<span class="pill s-entregue">Compra concluída em ${fmtData(conc)}${a.concluidoPorNome?" por "+esc(a.concluidoPorNome):""}</span>`:`<span class="hint">Concluir indica que a compra foi feita e entregue tudo certo, conforme solicitado.</span><span class="spacer"></span><button type="button" class="btn navy" id="concluirCompra"${["comprada","pendencia","entregue"].includes(s)?"":" disabled title=\"Disponível depois de marcada como comprada\""}>Concluir</button>`}</div>`;
+}
+async function concluirCompra(p){
+  const a=andamento[p.id]||{}, now=new Date().toISOString(); if(a.concluidoEm) return;
+  if(!confirm("Concluir esta compra? Isso indica que foi comprada e entregue conforme solicitado.")) return;
+  let porNome=a.responsavel||meuNome||"";
+  const historico=[...(a.historico||[]), {status:statusOf(p), nota:"Compra concluída: comprada e entregue conforme solicitado.", em:now, por:myId||null, porNome}].slice(-60);
+  const doc={...a, concluidoEm:now, concluidoPorNome:porNome, historico, uid:p.uid, status:statusOf(p)};
+  try{ await db.doc(`status/${p.uid}/lista/${p.id}`).set(doc); await db.doc("data/suprimentos/andamento/"+p.id).set(doc); toast(`${p.protocolo}: compra concluída`); }
+  catch(e){ toast("Não foi possível concluir. Tente de novo."); }
 }
 async function saveStatus(p){
   const st=$("#newStatus").value, nota=$("#newNota").value.trim(), resp=$("#newResp").value.trim();
+  if(!st){ $("#stMsg").textContent="Escolha Devolvida ou Cancelada."; return; }
+  if(st==="cancelada" && !nota){ $("#stMsg").textContent="Escreva o motivo do cancelamento."; $("#newNota").classList.add("invalid"); return; }
   if(st==="devolvida" && !nota){ $("#stMsg").textContent="Explique o que precisa ser corrigido."; $("#newNota").classList.add("invalid"); return; }
   if(st==="comprada" && statusOf(p)!=="comprada" && tetosDoPedido(p).length && !gastos[p.id]){ $("#stMsg").textContent="Esta categoria tem teto mensal: salve a escolha dos vencedores no mapa de cotação (com saldo) antes de marcar Comprada."; return; }
   const a=andamento[p.id]||{}; if(st===statusOf(p) && !nota && resp===(a.responsavel||"")){ $("#stMsg").textContent="Nada mudou."; return; }
@@ -1230,7 +1242,7 @@ $("#fSalvar").onclick=async()=>{
   const antigo=fornEditId?fornecedores.find(x=>x.id===fornEditId):null;
   const {id:_x, ...resto}=antigo||{};
   const cad=Object.fromEntries(CAD_CAMPOS.map(([k,id])=>[k, ($("#"+id).value||"").trim()])); cad.uf=(cad.uf||"").toUpperCase();
-  const doc={...resto, cadastro:cad, nome, cnpj, whatsapp:wpp, email, contato:$("#fContato").value.trim(), categorias:[...document.querySelectorAll("#fCats input:checked")].map(i=>i.value), atualizadoEm:new Date().toISOString()};
+  const doc={...resto, cadastro:{...(resto.cadastro||{}), ...cad}, nome, cnpj, whatsapp:wpp, email, contato:$("#fContato").value.trim(), categorias:[...document.querySelectorAll("#fCats input:checked")].map(i=>i.value), atualizadoEm:new Date().toISOString()};
   $("#fSalvar").disabled=true;
   try{
     const ref = fornEditId ? db.doc("data/suprimentos/fornecedores/"+fornEditId) : db.collection("data/suprimentos/fornecedores").doc();
@@ -2299,7 +2311,7 @@ function renderMapa(){
    <div class="wrap mapa-in">
     <div class="row"><div><span class="mono">${esc(p.protocolo)}</span><h2>Mapa de cotação</h2><span class="hint">${esc(catBase(p.categoria))} · ${esc(p.unidade||"")} · ${A.N} itens</span>${(()=>{ const ds=R.map(r=>r.cotadoEm||r.em).filter(Boolean).sort(); if(!ds.length) return ""; const fim=validaAte(ds[0]), ok=cotVigente(ds[0]);
       return `<br><span class="pill ${ok?"c-ok":"c-bad"}">${ok?"Cotação válida até":"Cotação vencida em"} ${fmtDiaISO(fim)} (${VALIDADE_COTACAO_DIAS} dias)</span>`; })()}</div><span class="spacer"></span>
-      ${R.length?`<button type="button" class="btn azul" id="mExport">Baixar mapa (Excel)</button>`:""}<button type="button" class="btn ghost" id="mFechar">Fechar ✕</button></div>
+      ${R.length?`<button type="button" class="btn azul" id="mExport">Baixar mapa (Excel)</button><button type="button" class="btn azul" id="mExportPdf">Baixar mapa (PDF)</button>`:""}<button type="button" class="btn ghost" id="mFechar">Fechar ✕</button></div>
 
     ${cotEdit?editorHtml(p):`<div class="row"><button type="button" class="btn primary" id="mNova">+ Adicionar resposta de fornecedor</button><span class="hint">Anexe a nossa planilha preenchida pelo fornecedor, leia o orçamento dele com o Claude ou digite os preços.</span></div>`}
 
@@ -2405,7 +2417,7 @@ function ligarMapa(p, A){
   const on=(id,fn)=>{ const el=$("#"+id); if(el) el.onclick=fn; };
   on("mFechar", fecharMapa);
   on("mNova", ()=>{ novaResposta(p); renderMapa(); });
-  on("mExport", ()=>exportarMapa(p));
+  on("mExport", ()=>exportarMapa(p)); on("mExportPdf", ()=>exportarMapaPdf(p));
   on("mMenor", ()=>{ const A2=analiseCot(p); escolha=A2.porItem.map(x=>x.ridMin); cot.decisao={...(cot.decisao||{}), divisoes:{}}; divUI=null; aplicarEscolhaLocal(p, A2.porItem.map(x=>x.motivoAuto||"")); });
   document.querySelectorAll("[data-tudo]").forEach(b=>b.onclick=()=>{ const rid=b.dataset.tudo, k=cot.respostas.findIndex(r=>r.id===rid);
     const A2=analiseCot(p); escolha=A2.porItem.map(x=>x.precos[k]!=null?rid:x.ridMin); cot.decisao={...(cot.decisao||{}), divisoes:{}}; divUI=null;
@@ -2852,6 +2864,55 @@ async function baixarCotacao(p){
   if(!downloads){ toast("Download indisponível nesta visualização"); return; }
   try{ const ExcelJS=await carregarExcelJS(); await xlBaixar(montarCotacaoXlsx(ExcelJS,p), `Cotação ${p.protocolo} - ISV.xlsx`); toast("Planilha de cotação baixada"); }
   catch(e){ if(e?.code==="declined") return; if(e?.code){ toast("Não foi possível baixar a planilha de cotação"); return; } await baixarCotacaoSimples(p); }
+}
+// ----- mapa de cotação em PDF (paisagem): mesmo conteúdo do Excel (Mapa + Compra por fornecedor) -----
+function montarMapaPdf(JsPDF, p){
+  const A=analiseCot(p), R=cot.respostas, itens=p.itens||[], AZ=[0,32,96], M=10;
+  const doc=new JsPDF({unit:"mm", format:"a4", orientation:"landscape"});
+  const brl=v=>v==null||v===""?"":"R$ "+Number(v).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:4}).replace(/(,\d\d)00?$/,"$1");
+  const nomeR=id=>(R.find(r=>r.id===id)||{}).fornecedor||"";
+  doc.setFillColor(...AZ); doc.rect(M,M,277,24,"F"); doc.setTextColor(255); doc.setFont("helvetica","bold"); doc.setFontSize(12);
+  doc.text("INSTITUTO SÃO VICENTE (ISV) · MAPA DE COTAÇÃO", M+4, M+7);
+  doc.setFont("helvetica","normal"); doc.setFontSize(9);
+  doc.text(`Pedido: ${p.protocolo} · Unidade: ${p.unidade||""} · Setor: ${p.setor||""}`, M+4, M+13);
+  doc.text(`Categoria: ${catBase(p.categoria)} · Tipo: ${p.tipo}`, M+4, M+18);
+  doc.text(`Gerado em: ${fmtData(new Date().toISOString())}${meuNome?" por "+meuNome:""}`, M+4, M+23);
+  doc.setTextColor(0);
+  const head=["ITEM","PRODUTO","UNID","QUANT"]; R.forEach(r=>head.push(`${r.fornecedor}\nUNIT.`,`${r.fornecedor}\nTOTAL`)); head.push("FORNECEDOR ESCOLHIDO","VALOR ESCOLHIDO","ECONOMIA");
+  const body=A.porItem.map(x=>{ const it=itens[x.i], row=[x.i+1,it.descricao,it.unidade,fmtQtd(x.q)];
+    x.precos.forEach(v=>{ row.push(v==null?"não cotou":brl(v), v==null?"":brl(Math.round(v*x.q*100)/100)); });
+    row.push(x.dividido?x.aloc.map(a=>`${R[a.k].fornecedor} (${fmtQtd(a.q)})`).join(" + "):nomeR(A.venc[x.i]), x.aloc.length?brl(Math.round(x.valorEscolhido*100)/100):"", x.econ==null?"":`${brl(Math.round(x.econ*100)/100)} (${pct(x.econPct)})`);
+    return row; });
+  const tot=["","TOTAL","",""]; A.totais.forEach(t=>tot.push("",brl(Math.round(t.total*100)/100))); tot.push("",brl(Math.round(A.totalEscolhido*100)/100),`${brl(Math.round(A.econValor*100)/100)} (${pct(A.econPct)})`); body.push(tot);
+  [["ITENS COTADOS",(rr,k)=>`${A.totais[k].cotados} de ${A.N}`],["PRAZO DE ENTREGA",rr=>rr.prazoEntrega||""],["VALIDADE",rr=>rr.validade||""],["PAGAMENTO",rr=>rr.pagamento||""],["FRETE",rr=>rr.frete||""]].forEach(([l,fn])=>{ const row=["",l,"",""]; R.forEach((rr,k)=>row.push("",fn(rr,k))); row.push("","",""); body.push(row); });
+  const nb=A.porItem.length;
+  doc.autoTable({startY:M+28, theme:"grid", margin:{left:M,right:M}, head:[head], body, styles:{fontSize:7, cellPadding:1.1, lineColor:[200,206,216], valign:"middle"}, headStyles:{fillColor:AZ, textColor:255, halign:"center"},
+    didParseCell:d=>{ if(d.section==="body" && d.row.index>=nb){ d.cell.styles.fillColor=AZ; d.cell.styles.textColor=255; d.cell.styles.fontStyle="bold"; } }});
+  let y=doc.lastAutoTable.finalY+5; if(y>185){ doc.addPage(); y=14; }
+  doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.text("RESUMO", M, y); doc.setFont("helvetica","normal"); y+=2;
+  const res=[]; if(A.unico) res.push(["Melhor fornecedor único", A.unico.nome, brl(Math.round(A.unico.total*100)/100), A.unicoCompleto?"":`faltam ${A.unico.faltam} itens`]);
+  res.push(["Menor preço por item (compra dividida)","",brl(Math.round(A.dividido*100)/100),A.semPreco?`${A.semPreco} item(ns) sem preço`:""]);
+  res.push([A.decidido?"Escolha aprovada (salva)":"Escolha atual (não salva)","",brl(Math.round(A.totalEscolhido*100)/100),""]);
+  res.push(["Economia da cotação (vs. maior proposta de cada item)","",brl(Math.round(A.econValor*100)/100),pct(A.econPct)]);
+  doc.autoTable({startY:y, theme:"grid", margin:{left:M,right:M}, body:res, styles:{fontSize:8, cellPadding:1.3, lineColor:[200,206,216]}, columnStyles:{0:{cellWidth:90,fontStyle:"bold"}}});
+  // página: compra por fornecedor escolhido
+  const grupos={}; A.porItem.forEach(x=>x.aloc.forEach(a=>{ (grupos[a.rid]=grupos[a.rid]||[]).push({...x, q:a.q}); }));
+  const rids=Object.keys(grupos);
+  if(rids.length){ doc.addPage(); let q=14; doc.setFont("helvetica","bold"); doc.setFontSize(11); doc.text("COMPRA POR FORNECEDOR ESCOLHIDO", M, q); q+=4;
+    rids.forEach(rid=>{ const k=R.findIndex(rr=>rr.id===rid), rr=R[k]; let s=0;
+      const fc=fornecedores.find(x=>x.id===rr.fid) || fornecedores.find(x=>norm(x.nome)===norm(rr.fornecedor));
+      const rows=grupos[rid].map(x=>{ const it=itens[x.i], v=x.precos[k]; s+=v*x.q; return [x.i+1,it.descricao,it.unidade,fmtQtd(x.q),brl(v),brl(Math.round(v*x.q*100)/100),(rr.marcas||[])[x.i]||""]; });
+      rows.push(["","TOTAL","","","",brl(Math.round(s*100)/100),""]);
+      doc.autoTable({startY:q, theme:"grid", margin:{left:M,right:M}, head:[[{content:rr.fornecedor.toUpperCase()+(fc&&fc.cnpj?`  ·  CNPJ ${fmtCnpj(fc.cnpj)}`:""),colSpan:7}],[{content:`Entrega: ${rr.prazoEntrega||"-"} · Validade: ${rr.validade||"-"} · Pagamento: ${rr.pagamento||"-"} · Frete: ${rr.frete||"-"}`,colSpan:7}],["ITEM","PRODUTO","UNID","QUANT","VALOR UNIT.","VALOR TOTAL","MARCA"]], body:rows,
+        styles:{fontSize:8, cellPadding:1.3, lineColor:[200,206,216]}, headStyles:{fillColor:AZ, textColor:255}});
+      q=doc.lastAutoTable.finalY+6; if(q>180){ doc.addPage(); q=14; } });
+  }
+  return doc;
+}
+async function exportarMapaPdf(p){
+  if(!downloads){ toast("Download indisponível nesta visualização"); return; }
+  try{ const J=await carregarJsPDF(); const d=montarMapaPdf(J,p); await downloads.save({filename:`Mapa de cotação ${p.protocolo} - ISV.pdf`, data:new Uint8Array(d.output("arraybuffer"))}); toast("Mapa de cotação (PDF) baixado"); }
+  catch(e){ if(e?.code==="declined") return; toast("Não foi possível gerar o PDF do mapa"); }
 }
 async function exportarMapa(p){
   if(!downloads){ toast("Download indisponível nesta visualização"); return; }
