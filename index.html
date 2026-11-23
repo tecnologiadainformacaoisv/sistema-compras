@@ -8,16 +8,17 @@
   --navy:#1B3F73; --navy-ink:#ffffff; --green:#3E9B4F; --green-soft:#E6F3E8;
   --bg:#F5F7FA; --surface:#FFFFFF; --ink:#16233A; --muted:#5B6880; --line:#DCE2EB; --field:#FFFFFF;
   --warn:#B26A00; --warn-soft:#FFF3DE; --bad:#B3261E; --bad-soft:#FCE8E6; --info:#1F5FBF; --info-soft:#E7EFFC;
+  --azul:#1F5FBF; --azul-soft:#E7EFFC;
   --f-display:"IBM Plex Serif",Georgia,serif; --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --navy:#16335E; --navy-ink:#ffffff; --green:#5CBF6C; --green-soft:#1C3324;
   --bg:#0F1623; --surface:#172133; --ink:#E6ECF5; --muted:#9AA8BF; --line:#2A3850; --field:#111A29;
-  --warn:#F0B35A; --warn-soft:#3A2B12; --bad:#F2867D; --bad-soft:#3C1C1A; --info:#8AB4F8; --info-soft:#1A2B47; color-scheme:dark}}
+  --warn:#F0B35A; --warn-soft:#3A2B12; --bad:#F2867D; --bad-soft:#3C1C1A; --info:#8AB4F8; --info-soft:#1A2B47; --azul:#2F6BD1; --azul-soft:#1A2B47; color-scheme:dark}}
 :root[data-theme="dark"]{
   --navy:#16335E; --navy-ink:#ffffff; --green:#5CBF6C; --green-soft:#1C3324;
   --bg:#0F1623; --surface:#172133; --ink:#E6ECF5; --muted:#9AA8BF; --line:#2A3850; --field:#111A29;
-  --warn:#F0B35A; --warn-soft:#3A2B12; --bad:#F2867D; --bad-soft:#3C1C1A; --info:#8AB4F8; --info-soft:#1A2B47; color-scheme:dark}
+  --warn:#F0B35A; --warn-soft:#3A2B12; --bad:#F2867D; --bad-soft:#3C1C1A; --info:#8AB4F8; --info-soft:#1A2B47; --azul:#2F6BD1; --azul-soft:#1A2B47; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
 .wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
@@ -53,6 +54,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .btn{font:inherit;font-weight:600;border-radius:7px;padding:9px 16px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
 .btn.primary{background:var(--green);border-color:var(--green);color:#fff}
 .btn.navy{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn.azul{background:var(--azul);border-color:var(--azul);color:#fff}
+.btn.azul:hover:not(:disabled){filter:brightness(1.1)}
 .btn.ghost{background:transparent;border-color:transparent;color:var(--muted);padding:6px 8px}
 .btn:disabled{opacity:.5;cursor:not-allowed}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
@@ -212,10 +215,10 @@ dl.meta dt{color:var(--muted)} dl.meta dd{margin:0;min-width:0;overflow-wrap:any
 .novo{display:inline-block;background:var(--green);color:#fff;font:700 .68rem var(--f-body);letter-spacing:.06em;padding:2px 7px;border-radius:999px;margin-left:6px;vertical-align:middle}
 @media (prefers-reduced-motion:no-preference){.aviso{animation:avisoIn .25s ease-out}@keyframes avisoIn{from{transform:translateY(12px);opacity:0}}}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;z-index:30;font-weight:500;max-width:calc(100% - 32px)}
-.drop{position:relative;border:2px dashed var(--line);border-radius:10px;padding:22px 16px;text-align:center;display:flex;flex-direction:column;gap:4px;align-items:center;background:var(--field);cursor:pointer}
+.drop{position:relative;border:2px dashed var(--azul);border-radius:10px;padding:22px 16px;text-align:center;display:flex;flex-direction:column;gap:4px;align-items:center;background:var(--field);cursor:pointer}
 .drop:hover,.drop.over{border-color:var(--green);background:var(--green-soft)}
 .drop input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
-.drop b{font-size:1rem}
+.drop b{font-size:1rem;color:var(--azul)}
 .drop:focus-within{outline:2px solid var(--green);outline-offset:2px}
 tr.bad td{background:var(--bad-soft)}
 .planflow{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
@@ -314,7 +317,7 @@ table.cmp thead th{position:sticky;top:0;z-index:1}
     <h3>Planilha padrão de solicitação <span class="req">*</span></h3>
     <div class="planflow">
       <div class="pstep"><span class="pn">1</span><div class="pbody"><b>Baixe a planilha padrão</b>
-        <button type="button" class="btn primary baixarModelo" id="baixarModelo">⬇ Baixar planilha padrão (.xlsx)</button>
+        <button type="button" class="btn baixarModelo azul" id="baixarModelo">⬇ Baixar planilha padrão (.xlsx)</button>
         <span class="hint">O navegador pede para confirmar o download. Já tem a planilha? Pule para o passo 3.</span></div></div>
       <div class="pstep"><span class="pn">2</span><div class="pbody"><b>Preencha no Excel</b>
         <span class="hint">Em cada linha, preencha PRODUTO, UNID e QUANT, sem abreviações indevidas. Se houver exigência de marca ou referência específica, informe na coluna MARCA / OBSERVAÇÃO.</span></div></div>
@@ -350,6 +353,11 @@ table.cmp thead th{position:sticky;top:0;z-index:1}
     <span class="spacer"></span><button class="btn" id="exportAll">Exportar lista (CSV)</button></div>
   <div class="summary" id="summary"></div>
   <div id="saldoKpis" class="kpiwrap" hidden></div>
+  <details class="panel forn" id="saldoPainel" style="gap:10px">
+    <summary>Saldo dos tetos do mês <span class="hint" id="saldoCount" style="font-weight:500"></span><span class="spacer"></span><button type="button" class="btn navy sm" id="tEditar" hidden>+ Adicionar / editar tetos</button></summary>
+    <div id="saldoPainelBody"></div>
+    <div id="tetosBox" hidden style="display:flex;flex-direction:column;gap:12px;border-top:1px solid var(--line);padding-top:12px"></div>
+  </details>
   <div class="panel" style="gap:12px">
     <div class="grid">
       <label class="f">Buscar<input id="fBusca" placeholder="Protocolo, solicitante, item…"></label>
@@ -368,42 +376,35 @@ table.cmp thead th{position:sticky;top:0;z-index:1}
     <div id="certPanel" class="certpanel" hidden></div>
     <h3>Cadastrar fornecedor</h3>
     <div class="notice info">Depois de cadastrar, anexe as <b>5 certidões</b> (Federal, Trabalhista, FGTS, Estadual e Municipal). Todas precisam ser <b>emitidas no mês do cadastro ou da atualização</b>: certidões de meses anteriores não são aceitas, mesmo que ainda estejam válidas.</div>
-    <div class="grid">
-      <label class="f"><span>Nome do fornecedor <span class="req">*</span></span><input id="fNome" placeholder="Ex.: Distribuidora Cariri Hospitalar"></label>
-      <label class="f"><span>CNPJ <span class="req">*</span></span><span class="row" style="gap:6px;flex-wrap:nowrap"><input id="fCnpj" inputmode="numeric" maxlength="18" placeholder="00.000.000/0000-00" style="flex:1;min-width:0"><button type="button" class="btn sm" id="fBuscaCnpj" title="Preenche os dados a partir do CNPJ">Buscar dados</button></span>
-        <span class="row" style="gap:6px;margin-top:4px"><label class="btn ghost sm" style="cursor:pointer">📎 Anexar cartão CNPJ (PDF)<input type="file" id="fCartao" accept="application/pdf,.pdf" hidden></label></span></label>
-      <label class="f">WhatsApp<input id="fWpp" inputmode="tel" placeholder="(88) 99999-0000"></label>
-      <label class="f">E-mail<input id="fEmail" type="email" placeholder="vendas@fornecedor.com.br"></label>
-      <label class="f">Contato<input id="fContato" placeholder="Nome do vendedor"></label>
+    <div class="row" style="gap:10px;flex-wrap:wrap;margin-bottom:6px">
+      <label class="btn azul" style="cursor:pointer">📎 Anexar cartão CNPJ (PDF)<input type="file" id="fCartao" accept="application/pdf,.pdf" hidden></label>
+      <a href="https://solucoes.receita.fazenda.gov.br/Servicos/cnpjreva/" target="_blank" rel="noopener">Consultar o cartão CNPJ na Receita ↗</a>
+      <span class="hint">Ao anexar o cartão, os dados do fornecedor são preenchidos sozinhos.</span>
     </div>
     <span class="hint" id="fCartaoInfo"></span>
-    <details class="cadsum" id="fCadSum"><summary>Dados do cadastro sumário (Regulamento, Art. 21) <span class="hint" style="font-weight:500">nome fantasia, endereço, regime, inscrição, banco</span></summary>
-      <div class="grid">
-        <label class="f">Nome fantasia<input id="fFantasia"></label>
-        <label class="f">Regime de apuração<select id="fRegime"><option value="">Selecione</option><option>Simples Nacional</option><option>Lucro Presumido</option><option>Lucro Real</option><option>MEI</option><option>Imune / Isenta</option></select></label>
-        <label class="f">Inscrição estadual ou municipal<input id="fInsc"></label>
-        <label class="f">Condição usual de pagamento<input id="fPagto" placeholder="Ex.: boleto 28 dias"></label>
-        <label class="f" style="grid-column:1/-1">Endereço (rua, número, complemento)<input id="fEnd"></label>
-        <label class="f">Bairro<input id="fBairro"></label>
-        <label class="f">CEP<input id="fCep" inputmode="numeric" maxlength="9" placeholder="00000-000"></label>
-        <label class="f">Cidade<input id="fCidade"></label>
-        <label class="f">UF<input id="fUf" maxlength="2" placeholder="CE" style="text-transform:uppercase"></label>
-        <label class="f">Banco<input id="fBanco"></label>
-        <label class="f">Agência<input id="fAgencia"></label>
-        <label class="f">Conta<input id="fConta"></label>
-        <label class="f">Chave PIX<input id="fPix"></label>
-      </div>
-    </details>
+    <div class="grid">
+      <label class="f"><span>Razão social <span class="req">*</span></span><input id="fNome" placeholder="Ex.: Distribuidora Cariri Hospitalar LTDA"></label>
+      <label class="f">Nome fantasia<input id="fFantasia"></label>
+      <label class="f"><span>CNPJ <span class="req">*</span></span><input id="fCnpj" inputmode="numeric" maxlength="18" placeholder="00.000.000/0000-00"></label>
+      <label class="f">Telefone / WhatsApp do vendedor<input id="fWpp" inputmode="tel" placeholder="(88) 99999-0000"></label>
+      <label class="f">E-mail do vendedor<input id="fEmail" type="email" placeholder="vendas@fornecedor.com.br"></label>
+      <label class="f">Nome do contato do vendedor<input id="fContato" placeholder="Nome do vendedor"></label>
+      <label class="f">Condição usual de pagamento<input id="fPagto" placeholder="Ex.: boleto 28 dias"></label>
+      <label class="f" style="grid-column:1/-1">Endereço (rua, número, complemento)<input id="fEnd"></label>
+      <label class="f">Bairro<input id="fBairro"></label>
+      <label class="f">CEP<input id="fCep" inputmode="numeric" maxlength="9" placeholder="00000-000"></label>
+      <label class="f">Cidade<input id="fCidade"></label>
+      <label class="f">UF<input id="fUf" maxlength="2" placeholder="CE" style="text-transform:uppercase"></label>
+      <label class="f">Banco<input id="fBanco"></label>
+      <label class="f">Agência<input id="fAgencia"></label>
+      <label class="f">Conta<input id="fConta"></label>
+      <label class="f">Chave PIX<input id="fPix"></label>
+    </div>
     <div class="row"><span class="hint">Categorias que ele atende (opcional):</span></div>
     <div class="chips" id="fCats"></div>
     <div class="row"><span class="hint" id="fMsg"></span><span class="spacer"></span><button type="button" class="btn primary" id="fSalvar">Cadastrar fornecedor</button></div>
   </details>
   <div id="ctrlWrap"></div>
-  <details class="panel forn" id="saldoPainel" style="gap:10px">
-    <summary>Saldo dos tetos do mês <span class="hint" id="saldoCount" style="font-weight:500"></span><span class="spacer"></span><button type="button" class="btn navy sm" id="tEditar" hidden>+ Adicionar / editar tetos</button></summary>
-    <div id="saldoPainelBody"></div>
-    <div id="tetosBox" hidden style="display:flex;flex-direction:column;gap:12px;border-top:1px solid var(--line);padding-top:12px"></div>
-  </details>
 </section>
 
 </div></main>
@@ -906,20 +907,20 @@ function renderDrawer(){
       </dl>
     </div>
     <div class="panel" style="gap:10px">
-      <div class="row"><h3>Itens (${p.totalItens??(p.itens||[]).length})</h3><span class="spacer"></span>${p.planilha?`<button class="btn navy" id="dorig">Baixar planilha original</button>`:""}<button class="btn" id="dcsv">Itens em CSV</button></div>
+      <div class="row"><h3>Itens (${p.totalItens??(p.itens||[]).length})</h3><span class="spacer"></span>${p.planilha?`<button class="btn azul" id="dorig">Baixar planilha original</button>`:""}<button class="btn azul" id="dcsv">Itens em CSV</button></div>
       ${(p.cabecalhos||[]).map(c=>`<div class="hint"><b>${esc(c.aba)}:</b> ${c.linhas.map(esc).join(" · ")}</div>`).join("")}
       ${p.planilhaLida===false?`<div class="notice info">As colunas desta planilha não foram reconhecidas. Confira os itens na planilha original.</div>`:""}
       <div class="tbl-wrap"><table><thead><tr><th>Aba</th><th class="num">Linha</th><th>Produto</th><th>Unidade</th><th class="num">Qtd.</th></tr></thead><tbody>
       ${(p.itens||[]).map((i,n)=>`<tr><td>${esc(i.aba||"")}</td><td class="num">${i.linha??n+1}</td><td>${esc(i.descricao)}${i.obs?`<br><span class="hint">Marca/obs.: ${esc(i.obs)}</span>`:""}</td><td>${esc(i.unidade)}</td><td class="num">${i.quantidade!=null?fmtQtd(i.quantidade):"—"}</td></tr>`).join("")}
       </tbody></table></div>
     </div>
-    <div class="panel" style="gap:8px"><div class="row"><h3>Justificativa da necessidade · ofício</h3><span class="spacer"></span>${p.oficio?`<button class="btn navy" id="doficio">Baixar ofício (PDF)</button>`:`<span class="hint">Ofício não anexado</span>`}</div>${p.oficio?`<span class="hint">📄 ${esc(p.oficio.nome)}</span>`:""}${p.justificativa?`<div style="white-space:pre-wrap">${esc(p.justificativa)}</div>`:""}</div>
+    <div class="panel" style="gap:8px"><div class="row"><h3>Justificativa da necessidade · ofício</h3><span class="spacer"></span>${p.oficio?`<button class="btn azul" id="doficio">Baixar ofício (PDF)</button>`:`<span class="hint">Ofício não anexado</span>`}</div>${p.oficio?`<span class="hint">📄 ${esc(p.oficio.nome)}</span>`:""}${p.justificativa?`<div style="white-space:pre-wrap">${esc(p.justificativa)}</div>`:""}</div>
     ${(p.anexos||[]).length?`<div class="panel" style="gap:8px"><h3>Outros anexos</h3>${(p.anexos||[]).length?`<div class="files">${p.anexos.map(x=>`<a href="/_blob/${esc(x.id)}" target="_blank" rel="noopener">📎 ${esc(x.nome)}</a>`).join("")}</div>`:`<span class="hint">Nenhum anexo.</span>`}</div>`:""}
-    ${blocoRecebimento(p,a)}
     ${canAdmin&&!["comprada","entregue","cancelada"].includes(s)?blocoVigentes(p):""}
     ${canAdmin?blocoEnvio(p,a):""}
     ${canAdmin?blocoMapaResumo(p):""}
-    ${canAdmin?`<div class="panel" style="gap:8px"><div class="row"><h3>Processo da compra</h3><span class="spacer"></span><button type="button" class="btn" id="dProcesso">Baixar processo completo (PDF)</button></div><span class="hint">PDF com a solicitação, o mapa de cotação, a homologação, os pedidos de compra, a regularidade dos fornecedores, o recebimento e o histórico, seguido dos anexos: ofício, propostas timbradas, certidões dos vencedores e notas fiscais atestadas (Regulamento, Art. 7º).</span></div>`:""}
+    ${blocoRecebimento(p,a)}
+    ${canAdmin?`<div class="panel" style="gap:8px"><div class="row"><h3>Processo da compra</h3><span class="spacer"></span><button type="button" class="btn azul" id="dProcesso">Baixar processo completo (PDF)</button></div><span class="hint">PDF com a solicitação, o mapa de cotação, a homologação, os pedidos de compra, a regularidade dos fornecedores, o recebimento e o histórico, seguido dos anexos: ofício, propostas timbradas, certidões dos vencedores e notas fiscais atestadas (Regulamento, Art. 7º).</span></div>`:""}
     ${canAdmin?`<div class="panel" style="gap:10px"><h3>Atualizar situação</h3>
       <div class="grid"><label class="f">Nova situação<select id="newStatus">${ORDER.map(k=>`<option value="${k}"${k===s?" selected":""}>${STATUS[k].l}</option>`).join("")}</select></label>
         <label class="f">Assistente responsável<input id="newResp" value="${esc(a.responsavel||meuNome)}" placeholder="Nome de quem cuida da demanda"></label></div>
@@ -1038,7 +1039,7 @@ function blocoEnvio(p,a){
     ${f?(()=>{ const r=certResumo(f); return r.pior>=1?`<div class="notice ${r.pior>=3?"err":"info"}"><b>Certidões de ${esc(f.nome)}:</b> ${certDetalhe(r)||esc(r.txt)}. ${r.pior>=2?"Atualize antes de fechar a compra (Fornecedores cadastrados → Certidões).":""}</div>`:`<div class="hint">${certPill(f)}</div>`; })():""}
     ${f?`<div class="hint">${f.cnpj?"CNPJ: <b>"+esc(fmtCnpj(f.cnpj))+"</b> · ":""}${f.whatsapp?"WhatsApp: <b>"+esc(fmtWpp(f.whatsapp))+"</b>":"Sem WhatsApp"} · ${f.email?"E-mail: <b style='user-select:all'>"+esc(f.email)+"</b>":"Sem e-mail"}</div>`:`<div class="hint">★ = atende a categoria deste pedido.</div>`}
     <div class="sendrow">
-      <button type="button" class="btn" id="envXlsx"${f&&f.impedimento?" disabled":""}>1. Baixar planilha de cotação</button>
+      <button type="button" class="btn azul" id="envXlsx"${f&&f.impedimento?" disabled":""}>1. Baixar planilha de cotação</button>
       <a class="btn wpp" id="envWpp" target="_blank" rel="noopener" href="#" aria-disabled="true">2. Abrir WhatsApp</a>
       <a class="btn mail" id="envMail" target="_blank" rel="noopener" href="#" aria-disabled="true">2. Abrir e-mail (Gmail)</a>
       <button type="button" class="btn ghost" id="envCopy">Copiar mensagem</button>
@@ -1131,12 +1132,12 @@ function renderForn(){
     fornDel=null; try{ await db.doc("data/suprimentos/fornecedores/"+id).delete(); toast("Fornecedor removido"); }catch(e){ toast("Não foi possível remover"); } });
   el.querySelectorAll("[data-fed]").forEach(b=>b.onclick=()=>{ const f=fornecedores.find(x=>x.id===b.dataset.fed); if(!f) return; fornEditId=f.id;
     $("#fNome").value=f.nome||""; $("#fCnpj").value=fmtCnpj(f.cnpj||""); $("#fWpp").value=fmtWpp(f.whatsapp); $("#fEmail").value=f.email||""; $("#fContato").value=f.contato||"";
-    CAD_CAMPOS.forEach(([k,id])=>$("#"+id).value=(f.cadastro||{})[k]||""); $("#fCadSum").open=true;
+    CAD_CAMPOS.forEach(([k,id])=>$("#"+id).value=(f.cadastro||{})[k]||"");
     document.querySelectorAll("#fCats input").forEach(i=>i.checked=(f.categorias||[]).map(catAtual).includes(i.value));
     $("#fSalvar").textContent="Salvar alterações"; $("#fMsg").textContent=`Editando ${f.nome}`; cartaoPend=null; renderCartaoInfo(); $("#fNome").focus(); });
 }
-const CAD_CAMPOS=[["fantasia","fFantasia"],["regime","fRegime"],["inscricao","fInsc"],["pagamento","fPagto"],["endereco","fEnd"],["bairro","fBairro"],["cep","fCep"],["cidade","fCidade"],["uf","fUf"],["banco","fBanco"],["agencia","fAgencia"],["conta","fConta"],["pix","fPix"]];
-const cadIncompleto = f => { const c=f.cadastro||{}; return ["regime","inscricao","endereco","cidade","uf"].filter(k=>!c[k]); };
+const CAD_CAMPOS=[["fantasia","fFantasia"],["pagamento","fPagto"],["endereco","fEnd"],["bairro","fBairro"],["cep","fCep"],["cidade","fCidade"],["uf","fUf"],["banco","fBanco"],["agencia","fAgencia"],["conta","fConta"],["pix","fPix"]];
+const cadIncompleto = f => { const c=f.cadastro||{}; return ["endereco","cidade","uf"].filter(k=>!c[k]); };
 $("#fCep").addEventListener("input", e=>{ const d=soDig(e.target.value).slice(0,8); e.target.value=d.length>5?d.slice(0,5)+"-"+d.slice(5):d; });
 // ---------- cartão CNPJ (PDF da Receita): lê os dados e guarda o arquivo no cadastro ----------
 let cartaoPend=null; // {nome, tipo, tamanho, b64} até salvar o fornecedor
@@ -1148,12 +1149,10 @@ function preencherDadosCnpj(d, origem){
   set("fEnd", [[d.descricao_tipo_de_logradouro, d.logradouro].filter(Boolean).map(titulo).join(" "), d.numero, titulo(d.complemento)].filter(x=>x && !/^\**$/.test(x)).join(", "));
   set("fBairro", titulo(d.bairro)); if(d.cep){ const c=soDig(d.cep); set("fCep", c.length===8?c.slice(0,5)+"-"+c.slice(5):c); }
   set("fCidade", titulo(d.municipio)); set("fUf", String(d.uf||"").toUpperCase().slice(0,2));
-  set("fRegime", d.opcao_pelo_mei?"MEI":d.opcao_pelo_simples?"Simples Nacional":"");
   if(d.email && /@/.test(d.email)) set("fEmail", String(d.email).toLowerCase().trim());
   if(d.ddd_telefone_1){ const tel=soDig(d.ddd_telefone_1); if(tel.length===11) set("fWpp", fmtWpp(tel)); }
-  $("#fCadSum").open=true;
   const sit=String(d.descricao_situacao_cadastral||"").toUpperCase().trim();
-  return sit && sit!=="ATIVA" ? `<b style="color:var(--bad)">Atenção: situação cadastral na Receita: ${esc(sit)}.</b> Dados preenchidos ${origem}; confira antes de salvar.` : `Dados preenchidos ${origem}${sit?" (situação: ATIVA)":""}. Confira e complete: inscrição estadual/municipal, WhatsApp, e-mail e dados bancários.`;
+  return sit && sit!=="ATIVA" ? `<b style="color:var(--bad)">Atenção: situação cadastral na Receita: ${esc(sit)}.</b> Dados preenchidos ${origem}; confira antes de salvar.` : `Dados preenchidos ${origem}${sit?" (situação: ATIVA)":""}. Confira e complete: WhatsApp, e-mail e dados bancários.`;
 }
 // lê o PDF pela posição dos rótulos do "Comprovante de Inscrição e de Situação Cadastral"
 async function textoPosicionadoPdf(file){
@@ -1175,7 +1174,8 @@ function lerCartaoItens(items){
     return abaixo.filter(i=>topo-i.y<3).sort((a,b)=>a.x-b.x).map(i=>i.s).join(" ").trim(); };
   const d={cnpj:"", razao_social:val("NOME EMPRESARIAL"), nome_fantasia:val("TITULO DO ESTABELECIMENTO (NOME DE FANTASIA)"), logradouro:val("LOGRADOURO"), numero:val("NUMERO"), complemento:val("COMPLEMENTO"),
     cep:val("CEP"), bairro:val("BAIRRO/DISTRITO"), municipio:val("MUNICIPIO"), uf:val("UF"), email:val("ENDERECO ELETRONICO"), ddd_telefone_1:val("TELEFONE"), descricao_situacao_cadastral:val("SITUACAO CADASTRAL")};
-  const ins=val("NUMERO DE INSCRICAO")||items.map(i=>i.s).join(" "); const m=ins.match(/\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}/); if(m) d.cnpj=soDig(m[0]);
+  const reCnpj=/\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}/; // o CNPJ pode estar fora da coluna do rótulo: procura no texto todo se não achar nela
+  const m=val("NUMERO DE INSCRICAO").match(reCnpj)||items.map(i=>i.s).join(" ").match(reCnpj); if(m) d.cnpj=soDig(m[0]);
   if(/^\*+$/.test(d.nome_fantasia)) d.nome_fantasia=""; if(/^\*+$/.test(d.complemento)) d.complemento="";
   d.ddd_telefone_1=soDig((d.ddd_telefone_1||"").split("/")[0]);
   return d;
@@ -1212,25 +1212,8 @@ async function gravarCartao(fid){
   cartaoPend=null;
 }
 
-// preenchimento pelo CNPJ (consulta pública BrasilAPI, dados da Receita Federal)
-async function buscarCnpj(){
-  const cnpj=soDig($("#fCnpj").value), msg=$("#fMsg"), b=$("#fBuscaCnpj");
-  if(!cnpjValido(cnpj)){ $("#fCnpj").classList.add("invalid"); msg.textContent="Digite um CNPJ válido para buscar os dados."; return; }
-  b.disabled=true; b.textContent="Buscando…"; msg.textContent="Consultando o CNPJ…";
-  try{
-    const ctl=new AbortController(), t=setTimeout(()=>ctl.abort(),12000);
-    const r=await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpj}`, {signal:ctl.signal}); clearTimeout(t);
-    if(r.status===404){ msg.textContent="CNPJ não encontrado na Receita Federal."; return; }
-    if(!r.ok) throw new Error("http "+r.status);
-    const d=await r.json();
-    msg.innerHTML=preencherDadosCnpj(d, "pela Receita Federal");
-  }catch(e){
-    msg.innerHTML=`Não foi possível consultar o CNPJ automaticamente agora. Preencha à mão ou consulte o <a href="https://solucoes.receita.fazenda.gov.br/Servicos/cnpjreva/Cnpjreva_Solicitacao.asp" target="_blank" rel="noopener">cartão CNPJ na Receita</a>.`;
-  }finally{ b.disabled=false; b.textContent="Buscar dados"; }
-}
-$("#fBuscaCnpj").onclick=buscarCnpj;
+// Os dados do fornecedor são preenchidos ao anexar o cartão CNPJ em PDF (lerCartaoCnpj).
 $("#fCartao").onchange=e=>{ const f=e.target.files[0]; e.target.value=""; if(f) lerCartaoCnpj(f); };
-$("#fCnpj").addEventListener("input", e=>{ if(soDig(e.target.value).length===14 && cnpjValido(e.target.value) && !fornEditId && !$("#fNome").value.trim()) buscarCnpj(); });
 $("#fCnpj").addEventListener("input", e=>{ const el=e.target; el.value=fmtCnpj(el.value); });
 $("#fSalvar").onclick=async()=>{
   const nome=$("#fNome").value.trim(), wpp=soDig($("#fWpp").value), email=$("#fEmail").value.trim();
@@ -1254,7 +1237,7 @@ $("#fSalvar").onclick=async()=>{
     await ref.set(doc); await gravarCartao(ref.id).catch(()=>toast("O cartão CNPJ não foi guardado. Anexe de novo."));
     toast(fornEditId?"Fornecedor atualizado":"Fornecedor cadastrado. Agora anexe as certidões do mês.");
     if(!fornEditId) setTimeout(()=>{ abrirCertidoes(ref.id); renderForn(); }, 300);
-    fornEditId=null; ["fNome","fCnpj","fWpp","fEmail","fContato",...CAD_CAMPOS.map(c=>c[1])].forEach(i=>$("#"+i).value=""); $("#fCadSum").open=false; document.querySelectorAll("#fCats input").forEach(i=>i.checked=false);
+    fornEditId=null; ["fNome","fCnpj","fWpp","fEmail","fContato",...CAD_CAMPOS.map(c=>c[1])].forEach(i=>$("#"+i).value=""); document.querySelectorAll("#fCats input").forEach(i=>i.checked=false);
     $("#fSalvar").textContent="Cadastrar fornecedor"; $("#fMsg").textContent=""; renderCartaoInfo();
   }catch(e){ $("#fMsg").textContent="Não foi possível salvar. Só a equipe de Suprimentos cadastra fornecedores."; }
   finally{ $("#fSalvar").disabled=false; }
@@ -1299,8 +1282,8 @@ function exclusivoCard(f){
         <label class="f"><span>Emissão da carta <span class="req">*</span></span><input type="date" id="exEm" value="${esc(U.emissao||"")}"></label>
         <label class="f" style="grid-column:span 2"><span>Produto/serviço exclusivo <span class="req">*</span></span><input id="exObj" value="${esc(U.objeto||"")}" placeholder="Ex.: reagentes do equipamento X"></label></div>
         <span class="hint">${U.arquivo?"📄 "+esc(U.arquivo.nome):"Anexe a carta em PDF."}</span>
-        <div class="row" style="gap:6px"><label class="btn sm" style="cursor:pointer">${U.arquivo?"Trocar PDF":"Anexar carta (PDF)"}<input type="file" id="exFile" accept="application/pdf,.pdf" hidden></label><span class="spacer"></span><span class="hint" id="exMsg"></span><button type="button" class="btn ghost sm" id="exCancel">Cancelar</button><button type="button" class="btn primary sm" id="exSalvar">Salvar carta</button></div>`
-      :`<div class="row" style="gap:6px"><button type="button" class="btn sm" id="exAbrir">${e?"Renovar / alterar carta":"Anexar carta de exclusividade"}</button>${e&&e.arquivo?`<button type="button" class="btn ghost sm" id="exBaixar">Baixar carta</button>`:""}${e?`<button type="button" class="btn ghost sm" id="exRemover">Remover</button>`:""}</div>`}
+        <div class="row" style="gap:6px"><label class="btn sm azul" style="cursor:pointer">${U.arquivo?"Trocar PDF":"Anexar carta (PDF)"}<input type="file" id="exFile" accept="application/pdf,.pdf" hidden></label><span class="spacer"></span><span class="hint" id="exMsg"></span><button type="button" class="btn ghost sm" id="exCancel">Cancelar</button><button type="button" class="btn primary sm" id="exSalvar">Salvar carta</button></div>`
+      :`<div class="row" style="gap:6px"><button type="button" class="btn sm azul" id="exAbrir">${e?"Renovar / alterar carta":"Anexar carta de exclusividade"}</button>${e&&e.arquivo?`<button type="button" class="btn sm azul" id="exBaixar">Baixar carta</button>`:""}${e?`<button type="button" class="btn ghost sm" id="exRemover">Remover</button>`:""}</div>`}
   </div>`;
 }
 function ligarExclusivo(f){
@@ -1419,7 +1402,7 @@ function renderCert(){
   const cs=f.certidoes||{}, R=certResumo(f), U=certUI;
   el.innerHTML=`<div class="row" style="align-items:flex-start"><div><h3 style="margin:0">Certidões de ${esc(f.nome)}</h3>
       <span class="hint">CNPJ <b class="mono" style="user-select:all">${esc(fmtCnpj(f.cnpj))}</b> <button type="button" class="btn ghost sm" id="cCopiar">Copiar CNPJ</button> · ${certPill(f)}</span></div>
-      ${f.cartaoCnpj?`<button type="button" class="btn ghost sm" id="cCartao">Baixar cartão CNPJ</button>`:""}<span class="spacer"></span><button type="button" class="btn ghost" id="cFechar">Fechar</button></div>
+      ${f.cartaoCnpj?`<button type="button" class="btn sm azul" id="cCartao">Baixar cartão CNPJ</button>`:""}<span class="spacer"></span><button type="button" class="btn ghost" id="cFechar">Fechar</button></div>
     <div class="notice info"><b>Regra do setor:</b> todas as certidões precisam ser <b>emitidas no mês do cadastro ou da atualização</b> (agora: ${esc(mesNome(hojeISO().slice(0,7)))}). Certidões emitidas em meses anteriores <b>não são aceitas</b>, mesmo que ainda estejam válidas. A cada novo mês, as certidões passam a “Atualizar”.</div>
     <span class="hint">Validade padrão: Federal e Trabalhista 180 dias · Estadual 180 · Municipal 60 · FGTS 30. Emita no site oficial, salve o PDF e anexe aqui: a página lê a validade, a situação e confere o CNPJ.</span>
     <div class="certgrid">${CERTS.map(t=>{ const c=cs[t.id], s=certStatus(c), aberto=U.tipo===t.id;
@@ -1428,9 +1411,9 @@ function renderCert(){
         ${c&&c.validade?`<span class="hint">${c.municipio?"<b>"+esc(c.municipio)+"</b> · ":""}Emissão ${isoBR(c.emissao)} · Validade ${isoBR(c.validade)}${c.validadeEstimada?" (estimada)":""} · ${esc(SITUACOES[c.situacao]||"Situação não informada")}${c.cnpjConfere===true?" · CNPJ confere":c.cnpjConfere===false?' · <b style="color:var(--bad)">CNPJ diferente</b>':""}<br>Conferida em ${fmtData(c.conferidoEm)}${c.porNome?" por "+esc(c.porNome):""}${c.origem==="manual"?" (lançada à mão)":""}</span>`:`<span class="hint">Nenhuma certidão anexada.</span>`}
         <div class="row" style="gap:6px;flex-wrap:wrap">
           ${t.link?`<a class="btn sm" href="${t.link}" target="_blank" rel="noopener">${esc(t.rotulo||"Emitir no site oficial ↗")}</a>`:`<span class="hint">${esc(t.dica)}</span>`}${t.dica2?`<span class="hint">${esc(t.dica2)}</span>`:""}
-          <label class="btn sm primary" style="cursor:pointer">Anexar PDF<input type="file" accept="application/pdf,.pdf" data-cfile="${t.id}" hidden></label>
+          <label class="btn sm azul" style="cursor:pointer">Anexar PDF<input type="file" accept="application/pdf,.pdf" data-cfile="${t.id}" hidden></label>
           <button type="button" class="btn ghost sm" data-cman="${t.id}">Lançar à mão</button>
-          ${c&&c.arquivo?`<button type="button" class="btn ghost sm" data-cbaixar="${t.id}">Baixar PDF</button>`:""}
+          ${c&&c.arquivo?`<button type="button" class="btn sm azul" data-cbaixar="${t.id}">Baixar PDF</button>`:""}
         </div>
         ${aberto?certForm(t):""}
       </div>`; }).join("")}${exclusivoCard(f)}</div>`;
@@ -1862,7 +1845,7 @@ function blocoAutorizacao(p, A){
         <div class="row" style="gap:8px;flex-wrap:wrap"><b>${esc(G.r.fornecedor)}</b><span class="mono hint">${esc(G.numero)}</span>${c?`<span class="pill ${c.cls}">${esc(c.txt)}</span>`:""}<span class="spacer"></span><b>${money(G.total)}</b><span class="hint">· ${G.itens.length} item(ns)</span></div>
         ${mudou?`<div class="notice err">A escolha mudou depois do envio (enviado: ${money(reg.total)}; agora: ${money(G.total)}). Envie o pedido de compra atualizado.</div>`:""}
         <div class="sendrow">
-          <button type="button" class="btn" data-afpdf="${esc(G.rid)}">1. Baixar pedido de compra (PDF)</button>
+          <button type="button" class="btn azul" data-afpdf="${esc(G.rid)}">1. Baixar pedido de compra (PDF)</button>
           <a class="btn wpp" target="_blank" rel="noopener" href="${wpp||"#"}" aria-disabled="${!wpp}" data-afwpp="${esc(G.rid)}">2. Abrir WhatsApp</a>
           <a class="btn mail" target="_blank" rel="noopener" href="${mail||"#"}" aria-disabled="${!mail}" data-afmail="${esc(G.rid)}">2. Abrir e-mail (Gmail)</a>
           <button type="button" class="btn ghost" data-afcopy="${esc(G.rid)}">Copiar mensagem</button>
@@ -1970,8 +1953,8 @@ function carregarNotas(p, forcar){
 function linhaNF(p, g, gi, edit){
   const N=((notasCache[p.id]||{}).porFornecedor||{})[g.fornecedor];
   return `<div class="row nfrow${edit&&!N?" nf-falta":""}" id="nfrow-${gi}" style="gap:8px;flex-wrap:wrap"><span class="hint"><b>Nota fiscal atestada (PDF)${edit?' <span class="req">*</span>':""}:</b> ${N?`${N.numero?`<b>NF nº ${esc(N.numero)}</b> · `:""}📄 ${esc(N.nome)} · enviada em ${fmtData(N.em)}${N.porNome?" por "+esc(N.porNome):""}`:(edit?"obrigatória para a prestação de contas do pedido. Informe o número e anexe a nota recebida e atestada.":"<span style='color:var(--warn)'>ainda não enviada pela unidade</span>")}</span>
-    ${N?`<button type="button" class="btn ghost sm" data-nfbx="${gi}">Baixar NF</button>`:""}
-    ${edit?`<input data-nfnum="${gi}" value="${esc(N&&N.numero||"")}" placeholder="Nº da NF *" style="width:130px" aria-label="Número da nota fiscal"><label class="btn sm" style="cursor:pointer">${N?"Trocar NF":"Anexar nota fiscal (PDF)"}<input type="file" accept="application/pdf,.pdf" data-nfup="${gi}" hidden></label>`:""}</div>`;
+    ${N?`<button type="button" class="btn sm azul" data-nfbx="${gi}">Baixar NF</button>`:""}
+    ${edit?`<input data-nfnum="${gi}" value="${esc(N&&N.numero||"")}" placeholder="Nº da NF *" style="width:130px" aria-label="Número da nota fiscal"><label class="btn sm azul" style="cursor:pointer">${N?"Trocar NF":"Anexar nota fiscal (PDF)"}<input type="file" accept="application/pdf,.pdf" data-nfup="${gi}" hidden></label>`:""}</div>`;
 }
 // grupo (fornecedor) com todos os itens conferidos e sem nota fiscal anexada
 const gruposSemNF = (p, c) => { const R=(andamento[p.id]||{}).recebimento; if(!R||!Array.isArray(R.grupos)) return []; const NF=(notasCache[p.id]||{}).porFornecedor||{};
@@ -2316,7 +2299,7 @@ function renderMapa(){
    <div class="wrap mapa-in">
     <div class="row"><div><span class="mono">${esc(p.protocolo)}</span><h2>Mapa de cotação</h2><span class="hint">${esc(catBase(p.categoria))} · ${esc(p.unidade||"")} · ${A.N} itens</span>${(()=>{ const ds=R.map(r=>r.cotadoEm||r.em).filter(Boolean).sort(); if(!ds.length) return ""; const fim=validaAte(ds[0]), ok=cotVigente(ds[0]);
       return `<br><span class="pill ${ok?"c-ok":"c-bad"}">${ok?"Cotação válida até":"Cotação vencida em"} ${fmtDiaISO(fim)} (${VALIDADE_COTACAO_DIAS} dias)</span>`; })()}</div><span class="spacer"></span>
-      ${R.length?`<button type="button" class="btn" id="mExport">Baixar mapa (Excel)</button>`:""}<button type="button" class="btn ghost" id="mFechar">Fechar ✕</button></div>
+      ${R.length?`<button type="button" class="btn azul" id="mExport">Baixar mapa (Excel)</button>`:""}<button type="button" class="btn ghost" id="mFechar">Fechar ✕</button></div>
 
     ${cotEdit?editorHtml(p):`<div class="row"><button type="button" class="btn primary" id="mNova">+ Adicionar resposta de fornecedor</button><span class="hint">Anexe a nossa planilha preenchida pelo fornecedor, leia o orçamento dele com o Claude ou digite os preços.</span></div>`}
 
@@ -2403,7 +2386,7 @@ function editorHtml(p){
     </tbody></table></div>
     <div class="pstep" style="align-items:flex-start"><span class="pn">📎</span><div class="pbody"><b>Proposta do fornecedor em papel timbrado e assinada <span class="req">*</span></b>
       <span class="hint">Obrigatória para qualquer valor (Regulamento de Compras, Art. 11, §2º). PDF ou foto, até 10 MB. Fica guardada junto com a resposta, pode ser baixada no mapa e entra no processo da compra.</span>
-      ${E.anexoNovo||E.anexo?`<div class="filerow">📄 <b>${esc((E.anexoNovo||E.anexo).nome)}</b>${E.anexoNovo&&E.anexoNovo.auto?' <span class="hint">(o mesmo arquivo lido com o Claude)</span>':""}${!E.anexoNovo&&E.anexo?`<button type="button" class="btn ghost sm" id="ceAnxBaixar">Baixar</button>`:""}<button type="button" class="btn ghost sm" id="ceAnxRm">Remover</button></div>`:""}
+      ${E.anexoNovo||E.anexo?`<div class="filerow">📄 <b>${esc((E.anexoNovo||E.anexo).nome)}</b>${E.anexoNovo&&E.anexoNovo.auto?' <span class="hint">(o mesmo arquivo lido com o Claude)</span>':""}${!E.anexoNovo&&E.anexo?`<button type="button" class="btn sm azul" id="ceAnxBaixar">Baixar</button>`:""}<button type="button" class="btn ghost sm" id="ceAnxRm">Remover</button></div>`:""}
       <label class="drop" style="padding:10px"><input type="file" id="ceAnx" accept=".pdf,application/pdf,image/*"><b>${E.anexoNovo||E.anexo?"Trocar proposta":"Anexar proposta timbrada"}</b></label></div></div>
     <label class="f">Observações<textarea id="ceObs" style="min-height:50px">${esc(E.obs)}</textarea></label>
     <div class="row"><span class="hint" id="ceMsg"></span><span class="spacer"></span><button type="button" class="btn ghost" id="ceCancel">Cancelar</button><button type="button" class="btn primary" id="ceSave">Salvar resposta</button></div>
@@ -2941,7 +2924,7 @@ function blocoRecebimento(p, a){
   const edit = !!myId && p.uid===myId, c=confDe(p), rs=resumoConf(p,c), salvo=conferencias[p.id];
   const ent = k => (c.entregas||{})[k] || {};
   return `<div class="panel" style="gap:12px" id="recebBox">
-    <div class="row"><h3>Conferência do recebimento</h3><span class="spacer"></span><button type="button" class="btn" id="baixarReceb">Baixar lista (Excel)</button></div>
+    <div class="row"><h3>Conferência do recebimento</h3><span class="spacer"></span><button type="button" class="btn azul" id="baixarReceb">Baixar lista (Excel)</button></div>
     <div class="row" style="gap:8px">${rs.div?`<span class="pill s-devolvida">${rs.div} divergência(s)</span>`:""}<span class="pill ${rs.completo?(rs.div?"s-devolvida":"s-entregue"):"s-analise"}">${rs.feitos} de ${rs.tot} itens conferidos</span>
       <span class="hint">${salvo&&salvo.atualizadoEm?`Atualizada pela unidade em ${fmtData(salvo.atualizadoEm)}${salvo.porNome?" por "+esc(salvo.porNome):""}`:"A unidade ainda não registrou a conferência."}</span></div>
     <span class="hint">${edit?"A cada entrega, preencha a quantidade recebida e marque se está conferido. Em caso de problema (produto, marca ou quantidade diferente, item faltando ou avariado), marque <b>Não</b> e explique na observação. Ao terminar a conferência de um fornecedor, informe o número e <b>anexe a nota fiscal atestada em PDF</b> (obrigatória para a prestação de contas do pedido). Depois clique em <b>Salvar conferência</b>: o Setor de Suprimentos acompanha por aqui.":"Conferência preenchida pela unidade solicitante. Itens com divergência aparecem em vermelho."}</span>
