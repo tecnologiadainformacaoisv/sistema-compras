@@ -74,7 +74,7 @@ Este projeto faz parte da pasta `Desenvolvimento/`, que reúne os sistemas do
 
 ## Padrões de desenvolvimento
 
-- Versionamento: **Semantic Versioning**; `MAJOR` = 0 em pré-produção.
+- Versionamento: **Semantic Versioning**; `MAJOR` = 0 em pré-produção. A versão aparece no rodapé da página (`<footer id="versao">` no `index.html`): **atualizar versão e data a cada subida** (0.4.0 em 2026-11-23).
 - Commits no padrão **Conventional Commits** (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`).
 - **LGPD:** `dados/` tem nomes, CNPJs, certidões e notas fiscais reais. Nunca versionar nem publicar. O repositório no GitHub é público.
 
