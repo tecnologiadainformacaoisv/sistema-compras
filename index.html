@@ -996,11 +996,11 @@ async function renderEquipe(){
   const linhas=pessoas.slice().sort((a,b)=>(b.id===myId)-(a.id===myId) || String(b.ultimoAcesso).localeCompare(String(a.ultimoAcesso)));
   el.innerHTML=`<div class="tbl-wrap" style="border:0"><table><thead><tr><th>Pessoa</th><th>Último acesso</th><th>Assistente de Suprimentos</th><th>Gestão · Gerência de Suprimentos e Logística (homologa mapas e gera relatórios)</th></tr></thead><tbody>${linhas.map(x=>{
     const pf=perf[x.id]||{}, nome=pf.name||nomePedido(x.id)||"Pessoa sem nome", email=pf.email||"";
-    const eu = x.id===myId;
-    return `<tr><td><b>${esc(nome)}</b>${eu?' <span class="pill s-aprovada">Você (dona)</span>':''}${email?`<br><span class="hint">${esc(email)}</span>`:""}${!pf.name&&nomePedido(x.id)?'<br><span class="hint">nome informado nos pedidos</span>':''}</td>
+    const eu = x.id===myId || !!pf.owner;
+    return `<tr><td><b>${esc(nome)}</b>${x.id===myId?' <span class="pill s-aprovada">Você</span>':''}${email?`<br><span class="hint">${esc(email)}</span>`:""}${!pf.name&&nomePedido(x.id)?'<br><span class="hint">nome informado nos pedidos</span>':''}</td>
       <td>${x.ultimoAcesso?new Date(x.ultimoAcesso+"T12:00:00").toLocaleDateString("pt-BR"):"—"}</td>
       <td>${eu?'<span class="hint">Sempre tem acesso total</span>':`<label class="row" style="gap:8px"><input type="checkbox" id="eq-${esc(x.id)}" data-eq="${esc(x.id)}" style="width:auto"${marcados.includes(x.id)?" checked":""}> Assistente</label>`}</td>
-      <td>${eu?'<span class="hint">Você é gestão</span>':`<label class="row" style="gap:8px"><input type="checkbox" data-gs="${esc(x.id)}" style="width:auto"${(gestoresRascunho||gestores).includes(x.id)?" checked":""}> Gestão</label>`}</td></tr>`;
+      <td>${eu?'<span class="hint">É gestão</span>':`<label class="row" style="gap:8px"><input type="checkbox" data-gs="${esc(x.id)}" style="width:auto"${(gestoresRascunho||gestores).includes(x.id)?" checked":""}> Gestão</label>`}</td></tr>`;
   }).join("")}</tbody></table></div>`;
   el.querySelectorAll("[data-eq]").forEach(cb=>cb.onchange=()=>{
     const set=new Set(equipeRascunho||equipe); cb.checked?set.add(cb.dataset.eq):set.delete(cb.dataset.eq);

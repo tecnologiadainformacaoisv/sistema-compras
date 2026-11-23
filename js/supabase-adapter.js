@@ -192,8 +192,8 @@
     can: function (p) { return p === "data.write" ? NIVEL[perfil.nivel] >= 2 : false; },
     isOwner: function () { return perfil.nivel === "owner"; },
     profiles: async function (ids) {
-      var r = await sb.from("perfis").select("id,nome,email").in("id", ids), m = {};
-      (r.data || []).forEach(function (p) { m[p.id] = { name: p.nome, email: p.email }; });
+      var r = await sb.from("perfis").select("id,nome,email,nivel").in("id", ids), m = {};
+      (r.data || []).forEach(function (p) { m[p.id] = { name: p.nome, email: p.email, owner: p.nivel === "owner" }; });
       return m;
     }
   };
