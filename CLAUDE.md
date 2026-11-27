@@ -37,6 +37,7 @@ Este projeto faz parte da pasta `Desenvolvimento/`, que reúne os sistemas do
 ```
 /
 ├── index.html              ← o sistema (original + 2 tags script + textos sem claude.ai)
+├── cotacao.html            ← página pública do fornecedor (link de cotação)
 ├── js/supabase-adapter.js  ← substitui window.claude (login, banco, downloads)
 ├── supabase/migrations/    ← SQL aplicado no projeto Compras ISV (em ordem)
 ├── CNAME                   ← compras.institutosaovicente.com.br (GitHub Pages, publicado em 2026-11-16)
@@ -67,14 +68,15 @@ Este projeto faz parte da pasta `Desenvolvimento/`, que reúne os sistemas do
 - **Configuração no painel do Supabase (não versionável):** Authentication > URL Configuration (Site URL e Redirect URL = `https://compras.institutosaovicente.com.br`) e Authentication > Emails > SMTP (e-mail de envio do Titan). Sem SMTP próprio, o Supabase só entrega e-mails para membros da organização e com limite baixo.
 - **Ajustes pedidos pela gestora (fase 3, 2026-11-23):**
   - Feito: cadastro do fornecedor na ordem dela (Razão social, fantasia, CNPJ, contato, pagamento, endereço, banco, PIX; sem regime/inscrição; sem "Buscar dados": os dados vêm do cartão CNPJ em PDF; link da consulta na Receita); seções do pedido reordenadas; botões de baixar/anexar em azul (`.btn.azul`); bloco de saldos logo abaixo do gráfico (edição só para donas, já era assim).
-  - **Pendente, aguardando respostas dela:** tirar o painel "Atualizar situação" (como o assistente devolve/cancela/aprova?); "Processo da compra" em etapas com botão Concluir (que situação marca? a automática da conferência+NF continua?); PDF paisagem do mapa de cotação (Excel já existe); **mapa por link público para o fornecedor** (fase própria: página sem login, código por pedido/fornecedor, upload de PDF timbrado obrigatório, validade do link); quem é a "coordenação de compras" para incluir saldos.
+  - Feito (0.4.0): "Atualizar situação" virou "Devolver ou cancelar"; etapas do processo com botão Concluir; PDF paisagem do mapa.
+- **Link de cotação do fornecedor (0.5.0, 2026-11-27):** `cotacao.html#<código>`, sem login, vale 3 dias úteis, permite reenvio, exige PDF timbrado; a resposta entra sozinha no mapa (`respostas/link-<fid>`). O visitante anônimo não lê tabelas: só chama `cot_abrir`, `cot_anexo` e `cot_enviar` (migration 004), que são públicas de propósito (aviso do linter é esperado). Links ficam em `data/suprimentos/links/<código>`.
 - **Pendências:** nova exportação de dados no dia da virada (importar `banco-completo.json` exige mapear os ids antigos para os novos usuários); anexos continuam em base64 dentro do banco (migrar para Storage se o volume crescer); leitura com IA exigiria função no servidor + chave da API.
 
 ---
 
 ## Padrões de desenvolvimento
 
-- Versionamento: **Semantic Versioning**; `MAJOR` = 0 em pré-produção. A versão aparece no rodapé da página (`<footer id="versao">` no `index.html`): **atualizar versão e data a cada subida** (0.4.0 em 2026-11-23).
+- Versionamento: **Semantic Versioning**; `MAJOR` = 0 em pré-produção. A versão aparece no rodapé da página (`<footer id="versao">` no `index.html`): **atualizar versão e data a cada subida** (0.5.0 em 2026-11-27).
 - Commits no padrão **Conventional Commits** (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`).
 - **LGPD:** `dados/` tem nomes, CNPJs, certidões e notas fiscais reais. Nunca versionar nem publicar. O repositório no GitHub é público.
 
