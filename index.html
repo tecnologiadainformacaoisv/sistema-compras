@@ -405,7 +405,7 @@ table.cmp thead th{position:sticky;top:0;z-index:1}
 </section>
 
 </div></main>
-<footer id="versao" style="text-align:center;padding:18px 16px 28px;font-size:12px;color:var(--muted)">Compras ISV · versão <b>0.4.0</b> · atualizada em 23/11/2026</footer>
+<footer id="versao" style="text-align:center;padding:18px 16px 28px;font-size:12px;color:var(--muted)">Compras ISV · versão <b>0.5.0</b> · atualizada em 27/11/2026</footer>
 
 <div id="drawerRoot"></div>
 <div id="mapaRoot"></div>
@@ -1034,14 +1034,42 @@ function fornOrdenados(p){
   return fornecedores.slice().sort((a,b)=>tem(b)-tem(a) || a.nome.localeCompare(b.nome,"pt-BR"));
 }
 function prazoCotacao(p){ return addDiasUteis(new Date().toISOString(), p.tipo==="Emergencial"?1:3); }
+// ---------- link de cotação do fornecedor (sem login): data/suprimentos/links/<código> ----------
+const LINK_COTACAO="https://compras.institutosaovicente.com.br/cotacao.html#";
+let links={};
+function prazoLink(){ const d=new Date(addDiasUteis(new Date().toISOString(),3)); d.setHours(23,59,59,0); return d.toISOString(); }
+const linkAtivo = l => l.status!=="encerrado" && Date.parse(l.expiraEm)>Date.now();
+const linksDoPedido = pid => Object.values(links).filter(l=>l.pid===pid).sort((a,b)=>String(b.criadoEm).localeCompare(String(a.criadoEm)));
+const linkDe = (pid,fid) => linksDoPedido(pid).find(l=>l.fid===fid && linkAtivo(l)) || null;
+const itensDoLink = p => (p.itens||[]).map(i=>({descricao:i.descricao||"", unidade:i.unidade||"", quantidade:i.quantidade??"", obs:i.obs||""}));
+async function gravarLink(l){ links[l.token]=l; try{ await db.doc("data/suprimentos/links/"+l.token).set(l); return true; }catch(e){ delete links[l.token]; toast("Não foi possível gerar o link do fornecedor. Confira a conexão."); if(openId===l.pid) renderDrawer(); return false; } }
+function garantirLink(p,f){
+  if(!db || !f || f.impedimento) return null;
+  const ja=linkDe(p.id,f.id); if(ja) return ja;
+  const token=Array.from(crypto.getRandomValues(new Uint8Array(16)),x=>x.toString(16).padStart(2,"0")).join("");
+  const l={token, pid:p.id, uid:p.uid, protocolo:p.protocolo||"", fid:f.id, fornecedor:f.nome||"", categoria:catBase(p.categoria), municipio:p.municipio||"", tipo:p.tipo||"",
+    itens:itensDoLink(p), criadoEm:new Date().toISOString(), expiraEm:prazoLink(), criadoPor:meuNome||"", status:"aberto"};
+  gravarLink(l); return l;
+}
+function blocoLinks(p){
+  const L=linksDoPedido(p.id); if(!L.length) return "";
+  return `<div class="sent"><b>Links de cotação:</b>${L.map(l=>{ const sit = l.respondidoEm?`respondido em ${fmtData(l.respondidoEm)}`:l.status==="encerrado"?"encerrado":linkAtivo(l)?"aguardando resposta":"prazo terminado";
+    return `<div class="row" style="gap:8px;margin-top:6px"><span><b>${esc(l.fornecedor)}</b> · ${sit}${linkAtivo(l)?` · vale até ${fmtDiaISO(l.expiraEm)}`:""}</span><span class="spacer"></span>${linkAtivo(l)?`<button type="button" class="btn ghost sm" data-lcopia="${esc(l.token)}">Copiar link</button><button type="button" class="btn ghost sm" data-lfim="${esc(l.token)}">Encerrar link</button>`:""}</div>`; }).join("")}</div>`;
+}
+function ligarLinks(p){
+  document.querySelectorAll("[data-lcopia]").forEach(b=>b.onclick=async()=>{ const u=LINK_COTACAO+b.dataset.lcopia; try{ await navigator.clipboard.writeText(u); toast("Link copiado"); }catch(e){ prompt("Copie o link:",u); } });
+  document.querySelectorAll("[data-lfim]").forEach(b=>b.onclick=async()=>{ const l=links[b.dataset.lfim]; if(!l) return; if(b.dataset.ok!=="1"){ b.dataset.ok="1"; b.textContent="Confirmar: encerrar"; return; }
+    if(await gravarLink({...l, status:"encerrado", encerradoEm:new Date().toISOString(), encerradoPor:meuNome||""})){ envioUI.msg=null; toast("Link encerrado"); renderDrawer(); } });
+}
 function msgPadrao(p, f){
   const n=p.totalItens??(p.itens||[]).length, resp=(andamento[p.id]||{}).responsavel||meuNome||"";
-  return `Olá${f&&f.contato?", "+f.contato:""}! Tudo bem?\n\nO Instituto São Vicente (ISV) solicita cotação dos itens da planilha em anexo.\n\nPedido: ${p.protocolo}\nCategoria: ${catBase(p.categoria)}\nQuantidade de itens: ${n}\nLocal de entrega: ${p.municipio||""}${p.tipo==="Emergencial"?"\nPEDIDO EMERGENCIAL":""}\n\nPor favor, preencha o valor unitário de cada item e informe o prazo de entrega e a validade da proposta. Precisamos do retorno até ${fmtDia(prazoCotacao(p))}.\n\nObrigado(a)!\n${resp?resp+" · ":""}Setor de Suprimentos · ISV`;
+  return `Olá${f&&f.contato?", "+f.contato:""}! Tudo bem?\n\nO Instituto São Vicente (ISV) solicita sua cotação.\n\nPedido: ${p.protocolo}\nCategoria: ${catBase(p.categoria)}\nQuantidade de itens: ${n}\nLocal de entrega: ${p.municipio||""}${p.tipo==="Emergencial"?"\nPEDIDO EMERGENCIAL":""}\n\n${(()=>{ const l=f&&linkDe(p.id,f.id); return l?`RESPONDA PELO LINK (não precisa de login):\n${LINK_COTACAO}${l.token}\n\nNo link você digita os valores ou anexa a planilha, e anexa a proposta em papel timbrado e assinada (PDF). O link vale até ${fmtDiaISO(l.expiraEm)} e permite corrigir e reenviar.`:`Por favor, preencha o valor unitário de cada item e informe o prazo de entrega e a validade da proposta. Precisamos do retorno até ${fmtDia(prazoCotacao(p))}.`; })()}\n\nObrigado(a)!\n${resp?resp+" · ":""}Setor de Suprimentos · ISV`;
 }
 function blocoEnvio(p,a){
   if(envioUI.pid!==p.id) envioUI={pid:p.id, fid:"", msg:null};
   const lista=fornOrdenados(p), c=catAtual(catBase(p.categoria));
   const f=fornecedores.find(x=>x.id===envioUI.fid);
+  if(f) garantirLink(p,f);
   const msg = envioUI.msg ?? msgPadrao(p,f);
   const envios=(a.envios||[]).slice().reverse();
   return `<div class="panel" style="gap:12px" id="envioBox"><h3>Enviar ao fornecedor para cotação</h3>
@@ -1052,14 +1080,15 @@ function blocoEnvio(p,a){
     ${f?(()=>{ const r=certResumo(f); return r.pior>=1?`<div class="notice ${r.pior>=3?"err":"info"}"><b>Certidões de ${esc(f.nome)}:</b> ${certDetalhe(r)||esc(r.txt)}. ${r.pior>=2?"Atualize antes de fechar a compra (Fornecedores cadastrados → Certidões).":""}</div>`:`<div class="hint">${certPill(f)}</div>`; })():""}
     ${f?`<div class="hint">${f.cnpj?"CNPJ: <b>"+esc(fmtCnpj(f.cnpj))+"</b> · ":""}${f.whatsapp?"WhatsApp: <b>"+esc(fmtWpp(f.whatsapp))+"</b>":"Sem WhatsApp"} · ${f.email?"E-mail: <b style='user-select:all'>"+esc(f.email)+"</b>":"Sem e-mail"}</div>`:`<div class="hint">★ = atende a categoria deste pedido.</div>`}
     <div class="sendrow">
-      <button type="button" class="btn azul" id="envXlsx"${f&&f.impedimento?" disabled":""}>1. Baixar planilha de cotação</button>
-      <a class="btn wpp" id="envWpp" target="_blank" rel="noopener" href="#" aria-disabled="true">2. Abrir WhatsApp</a>
-      <a class="btn mail" id="envMail" target="_blank" rel="noopener" href="#" aria-disabled="true">2. Abrir e-mail (Gmail)</a>
+      <button type="button" class="btn azul" id="envXlsx"${f&&f.impedimento?" disabled":""}>Baixar planilha (opcional)</button>
+      <a class="btn wpp" id="envWpp" target="_blank" rel="noopener" href="#" aria-disabled="true">Abrir WhatsApp</a>
+      <a class="btn mail" id="envMail" target="_blank" rel="noopener" href="#" aria-disabled="true">Abrir e-mail (Gmail)</a>
       <button type="button" class="btn ghost" id="envCopy">Copiar mensagem</button>
     </div>
-    <span class="hint">Depois de abrir o WhatsApp ou o e-mail, arraste a planilha baixada para a conversa e envie. O pedido passa para “Em cotação” automaticamente.</span>
+    <span class="hint">O link de cotação vai no texto: o fornecedor responde sem login e a resposta entra sozinha no mapa. O pedido passa para “Em cotação” automaticamente.</span>
     <label class="f">Mensagem (pode editar)<textarea id="envMsg" style="min-height:150px">${esc(msg)}</textarea></label>
     <div class="row"><span class="spacer"></span><button type="button" class="btn ghost" id="envReg">Já enviei por outro meio: registrar envio</button></div>`}
+    ${blocoLinks(p)}
     ${envios.length?`<div class="sent"><b>Enviado para cotação:</b><br>${envios.map(e=>`${esc(e.fornecedor)} · ${esc(e.canal)} · ${fmtData(e.em)}${e.porNome?" · "+esc(e.porNome):""}`).join("<br>")}</div>`:""}
   </div>`;
 }
@@ -1074,6 +1103,7 @@ function linksEnvio(p){
 }
 function ligarVigentes(p){ const b=$("#vigTrazer"); if(b) b.onclick=()=>trazerVigentes(p); }
 function ligarEnvio(p){
+  ligarLinks(p);
   const sel=$("#envForn"); if(!sel) return;
   sel.onchange=()=>{ envioUI.fid=sel.value; envioUI.msg=null; renderDrawer(); };
   $("#envMsg").oninput=e=>{ envioUI.msg=e.target.value; linksEnvio(p); };
@@ -1117,6 +1147,7 @@ async function baixarCotacaoSimples(p){
   catch(e){ if(e?.code!=="declined") toast("Não foi possível baixar a planilha de cotação"); }
 }
 async function registrarEnvio(p,f,canal){
+  { const l=linkDe(p.id,f.id); if(l) gravarLink({...l, itens:itensDoLink(p), expiraEm:prazoLink()}); }
   const a=andamento[p.id]||{}, now=new Date().toISOString();
   const envios=[...(a.envios||[]), {fornecedor:f.nome, fid:f.id, canal, em:now, porNome:meuNome}].slice(-40);
   const s=statusOf(p), novo=["recebida","analise","aprovada"].includes(s)?"cotacao":s;
@@ -1575,10 +1606,10 @@ async function desindexarResposta(pid, rid){ try{ await db.doc(`data/suprimentos
 // respostas salvas antes do índice existir: indexa uma vez por sessão as que ainda estão no prazo
 async function completarIndicePrecos(){
   if(precosBackfill || !canAdmin || !pedidos.length) return; precosBackfill=true;
-  const limite=Date.now()-(VALIDADE_COTACAO_DIAS+5)*864e5, ja=new Set(precosIdx.map(x=>x.pid+"__"+x.rid));
+  const limite=Date.now()-(VALIDADE_COTACAO_DIAS+5)*864e5, ja=new Map(precosIdx.map(x=>[x.pid+"__"+x.rid, x.cotadoEm]));
   for(const p of pedidos){ if(Date.parse(p.criadoEm||0)<limite) continue;
     try{ const q=await db.collection(`data/suprimentos/cotacoes/${p.id}/respostas`).get();
-      for(const d of q.docs){ const r=d.data(); if(ja.has(p.id+"__"+d.id) || r.origem==="reaproveitada" || !cotVigente(r.cotadoEm||r.em)) continue; await indexarResposta(p, d.id, r); } }catch(e){} }
+      for(const d of q.docs){ const r=d.data(); const k=p.id+"__"+d.id; if((ja.has(k) && !(r.origem==="link" && ja.get(k)!==r.cotadoEm)) || r.origem==="reaproveitada" || !cotVigente(r.cotadoEm||r.em)) continue; await indexarResposta(p, d.id, r); } }catch(e){} }
 }
 function vigentesResumo(p){ const v=vigentesDoPedido(p); return v.length; }
 function blocoVigentes(p){
@@ -2329,7 +2360,7 @@ function renderMapa(){
     <div class="panel" style="gap:10px">
       <div class="row"><h3>Respostas recebidas</h3></div>
       <div class="tbl-wrap"><table><thead><tr><th>Fornecedor</th><th class="num">Cotados</th><th class="num">Total</th><th>Entrega</th><th>Validade</th><th>Pagamento</th><th>Frete</th><th></th></tr></thead><tbody>
-      ${R.map((r,k)=>{ const t=A.totais[k]; return `<tr><td><b>${esc(r.fornecedor)}</b><br><span class="hint">${r.origem==="planilha"?"Nossa planilha":r.origem==="claude"?"Lido com o Claude":r.origem==="reaproveitada"?"♻ Cotação vigente reaproveitada":"Digitado"}${r.arquivoNome?" · "+esc(r.arquivoNome):""}</span>${r.anexo?`<br><button type="button" class="linkbtn" data-ranx="${esc(r.id)}">📎 Proposta timbrada: ${esc(r.anexo.nome)}</button>`:""}
+      ${R.map((r,k)=>{ const t=A.totais[k]; return `<tr><td><b>${esc(r.fornecedor)}</b><br><span class="hint">${r.origem==="planilha"?"Nossa planilha":r.origem==="claude"?"Lido com o Claude":r.origem==="link"?"Respondida pelo fornecedor no link":r.origem==="reaproveitada"?"♻ Cotação vigente reaproveitada":"Digitado"}${r.arquivoNome?" · "+esc(r.arquivoNome):""}</span>${r.anexo?`<br><button type="button" class="linkbtn" data-ranx="${esc(r.id)}">📎 Proposta timbrada: ${esc(r.anexo.nome)}</button>`:""}
         ${(()=>{ const ci=r.cotadoEm||r.em; if(!ci) return ""; const ok=cotVigente(ci); return `<br><span class="hint" style="${ok?"":"color:var(--bad);font-weight:600"}">Cotada em ${fmtDiaISO(ci)} · ${ok?"válida até":"vencida em"} ${fmtDiaISO(validaAte(ci))}</span>`; })()}</td>
         <td class="num">${t.cotados}/${A.N}</td><td class="num">${money(t.total)}</td><td>${esc(r.prazoEntrega||"—")}</td><td>${esc(r.validade||"—")}</td><td>${esc(r.pagamento||"—")}</td><td>${esc(r.frete||"—")}</td>
         <td style="white-space:nowrap"><button type="button" class="btn ghost" data-redit="${esc(r.id)}">Editar</button><button type="button" class="btn ghost" data-rdel="${esc(r.id)}" style="${cotDel===r.id?"color:var(--bad)":""}">${cotDel===r.id?"Confirmar remoção":"Remover"}</button></td></tr>`; }).join("")}
@@ -2378,11 +2409,11 @@ function editorHtml(p){
     <div class="planflow">
       <div class="pstep"><span class="pn">A</span><div class="pbody"><b>Nossa planilha preenchida</b><span class="hint">O fornecedor devolveu a planilha de cotação que mandamos.</span>
         <label class="drop" style="padding:12px"><input type="file" id="ceXlsx" accept=".xlsx,.xls,.xlsm,.ods,.csv"><b>Anexar planilha</b></label></div></div>
-      <div class="pstep"><span class="pn">B</span><div class="pbody"><b>Ler orçamento com o Claude</b><span class="hint">PDF, foto ou print, planilha no modelo do fornecedor, ou texto colado do WhatsApp/e-mail.</span>
+      ${sampleFn?`<div class="pstep"><span class="pn">B</span><div class="pbody"><b>Ler orçamento com o Claude</b><span class="hint">PDF, foto ou print, planilha no modelo do fornecedor, ou texto colado do WhatsApp/e-mail.</span>
         <label class="drop" style="padding:12px" id="ceAiDrop"><input type="file" id="ceAiFile" accept=".pdf,application/pdf,image/*,.xlsx,.xls,.csv,.txt"><b>Anexar orçamento</b></label>
         <textarea id="ceAiTxt" placeholder="Ou cole aqui o texto do orçamento" style="min-height:70px"></textarea>
-        <div class="row"><button type="button" class="btn navy" id="ceAiGo"${E.lendo?" disabled":""}>Ler com o Claude</button>${E.lendo?`<button type="button" class="btn ghost" id="ceAiStop">Parar</button>`:""}</div></div></div>
-      <div class="pstep"><span class="pn">C</span><div class="pbody"><b>Digitar os preços</b><span class="hint">Preencha os valores unitários direto na tabela abaixo.</span></div></div>
+        <div class="row"><button type="button" class="btn navy" id="ceAiGo"${E.lendo?" disabled":""}>Ler com o Claude</button>${E.lendo?`<button type="button" class="btn ghost" id="ceAiStop">Parar</button>`:""}</div></div></div>`:""}
+      <div class="pstep"><span class="pn">${sampleFn?"C":"B"}</span><div class="pbody"><b>Digitar os preços</b><span class="hint">Preencha os valores unitários direto na tabela abaixo.</span></div></div>
     </div>
     ${E.lendo?`<div class="notice info" id="ceStatus">Lendo o orçamento com o Claude… pode levar até 1 minuto.</div>`:""}
     ${E.aviso?`<div class="notice ${E.aviso.tipo}">${E.aviso.html}</div>`:""}
@@ -2490,15 +2521,15 @@ function ligarEditor(p){
   $("#ceCancel").onclick=()=>{ if(cotCtl){ try{cotCtl.abort();}catch(e){} } cotEdit=null; renderMapa(); };
   $("#ceSave").onclick=()=>salvarResposta(p);
   $("#ceXlsx").onchange=async e=>{ const f=e.target.files[0]; e.target.value=""; if(f) await lerNossaPlanilha(f,p); };
-  $("#ceAiFile").onchange=async e=>{ const f=e.target.files[0]; e.target.value=""; if(f){ E._aiFile=f; $("#ceAiDrop").querySelector("b").textContent=f.name;
+  if($("#ceAiFile")) $("#ceAiFile").onchange=async e=>{ const f=e.target.files[0]; e.target.value=""; if(f){ E._aiFile=f; $("#ceAiDrop").querySelector("b").textContent=f.name;
     if(!E.anexoNovo && !E.anexo && (/pdf$/i.test(f.type)||/\.pdf$/i.test(f.name)||/^image\//.test(f.type))){ try{ E.anexoNovo={...(await arquivoParaAnexo(f)), auto:true}; E.anexoRm=false; renderMapa(); }catch(err){} } } };
   $("#ceAnx").onchange=async e=>{ const f=e.target.files[0]; e.target.value=""; if(!f) return;
     try{ E.anexoNovo=await arquivoParaAnexo(f); E.anexoRm=false; renderMapa(); }catch(err){ toast(err.msg||"Não foi possível ler o arquivo"); } };
   const rm=$("#ceAnxRm"); if(rm) rm.onclick=()=>{ if(E.anexoNovo) E.anexoNovo=null; else { E.anexo=null; E.anexoRm=true; } renderMapa(); };
   const bx=$("#ceAnxBaixar"); if(bx) bx.onclick=()=>baixarAnexoResposta(E.anexo, `Proposta ${E.fornecedor||""}`);
-  $("#ceAiGo").onclick=()=>lerComClaude(p);
+  if($("#ceAiGo")) $("#ceAiGo").onclick=()=>lerComClaude(p);
   const st=$("#ceAiStop"); if(st) st.onclick=()=>{ if(cotCtl) cotCtl.abort(); };
-  if(E._aiFile) $("#ceAiDrop").querySelector("b").textContent=E._aiFile.name;
+  if(E._aiFile && $("#ceAiDrop")) $("#ceAiDrop").querySelector("b").textContent=E._aiFile.name;
 }
 
 const ANEXO_MAX=10*1024*1024;
@@ -2583,7 +2614,7 @@ async function lerNossaPlanilha(file, p){
         if(c.m>=0 && String(row[c.m]).trim()) marcas[idx]=String(row[c.m]).trim();
       }
     }
-    if(!achou){ E.aviso={tipo:"err", html:`Não encontrei as colunas <b>PRODUTO</b> e <b>VALOR UNITÁRIO</b> em <b>${esc(file.name)}</b>. Se o fornecedor usou outro modelo, use “Ler orçamento com o Claude”.`}; renderMapa(); return; }
+    if(!achou){ E.aviso={tipo:"err", html:`Não encontrei as colunas <b>PRODUTO</b> e <b>VALOR UNITÁRIO</b> em <b>${esc(file.name)}</b>. Se o fornecedor usou outro modelo, digite os preços na tabela.`}; renderMapa(); return; }
     // planilha incompleta do fornecedor: não é incluída
     const faltaCampos=[["fornecedor","nome do fornecedor"],["prazoEntrega","prazo de entrega"],["validade","validade da proposta"],["pagamento","condição de pagamento"],["frete","frete"]].filter(([k])=>!campos[k]).map(([,l])=>l);
     if(faltaCampos.length || invalidos.length || !lidos){
@@ -3208,6 +3239,7 @@ resetForm();
       }, ()=>{}));
       subs.push(db.collection("data/suprimentos/homologacoes").onSnapshot(snap=>{ homolog={}; snap.docs.forEach(d=>homolog[d.id]=d.data()); render(); if(mapaAberto) renderMapa(); }, ()=>{}));
       subs.push(db.collection("data/suprimentos/gastos").onSnapshot(snap=>{ gastos={}; snap.docs.forEach(d=>gastos[d.id]=d.data()); atualizarSaldoViews(); }, ()=>{}));
+      subs.push(db.collection("data/suprimentos/links").onSnapshot(snap=>{ const n={}; snap.docs.forEach(d=>n[d.id]=d.data()); links=n; if(openId) renderDrawer(); }, ()=>{}));
       subs.push(db.collection("data/suprimentos/precos").onSnapshot(snap=>{
         precosIdx=snap.docs.map(d=>d.data()); precosBuckets=null; vigCache={}; render(); if(openId) renderDrawer(); completarIndicePrecos();
       }, ()=>{}));

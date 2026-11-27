@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Cotação · Instituto São Vicente</title>
+<style>
+:root{--navy:#1B3F73;--azul:#1F5FBF;--bg:#F5F7FA;--surface:#fff;--ink:#16233A;--muted:#5B6880;--line:#DCE2EB;--bad:#B3261E;--bad-soft:#FCE8E6;--ok:#1E6B2E;--ok-soft:#E6F3E8}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,"Segoe UI",Roboto,sans-serif}
+header{background:var(--navy);color:#fff;padding:18px 16px;border-bottom:3px solid #3E9B4F}
+header div,main{max-width:900px;margin:0 auto}
+header h1{margin:0;font-size:20px}
+header span{opacity:.85;font-size:13px}
+main{padding:16px;display:flex;flex-direction:column;gap:14px}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px}
+h2{margin:0;font-size:16px}
+.hint{color:var(--muted);font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+label{display:flex;flex-direction:column;gap:4px;font-weight:600;font-size:13px}
+input,textarea{font:inherit;color:inherit;border:1px solid var(--line);border-radius:8px;padding:9px 10px;background:#fff;width:100%;font-weight:400}
+.invalid{border-color:var(--bad)}
+.item{display:grid;grid-template-columns:1fr 150px 190px 110px;gap:10px;align-items:center;border-top:1px solid var(--line);padding-top:10px}
+.item .tot{text-align:right;font-variant-numeric:tabular-nums}
+@media (max-width:700px){.item{grid-template-columns:1fr 1fr}.item .nome{grid-column:1/-1}.item .tot{grid-column:1/-1}}
+.btn{font:inherit;font-weight:600;border:1px solid var(--azul);background:var(--azul);color:#fff;border-radius:8px;padding:10px 18px;cursor:pointer}
+.btn.sec{background:#fff;color:var(--azul)}
+.btn:disabled{opacity:.55;cursor:default}
+.drop{border:2px dashed var(--azul);color:var(--azul);border-radius:10px;padding:14px;text-align:center;cursor:pointer;font-weight:600}
+.drop input{position:absolute;opacity:0;width:1px;height:1px}
+.drop:focus-within{outline:2px solid var(--navy)}
+.aviso{border-radius:10px;padding:12px 14px}
+.aviso.err{background:var(--bad-soft);color:var(--bad)}
+.aviso.ok{background:var(--ok-soft);color:var(--ok)}
+.linha{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+</style>
+</head>
+<body>
+<header><div><h1>Instituto São Vicente</h1><span>Pedido de cotação · Setor de Suprimentos</span></div></header>
+<main id="app"><div class="box">Carregando…</div></main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+(function(){
+  "use strict";
+  var API="https://cmvhbcmolvolxoperdin.supabase.co/rest/v1/rpc/";
+  // Chave pública (anon): sozinha não lê nenhuma tabela; só permite chamar as funções do link.
+  var KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNtdmhiY21vbHZvbHhvcGVyZGluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ4NDQ1OTEsImV4cCI6MjExMDQyMDU5MX0.P8Vyrwl5odnMMR723X3vRn-gnzL4Lg9Lqs1Z3aElo8g";
+  var TOKEN=location.hash.slice(1).trim().toLowerCase();
+  var $=function(s){return document.querySelector(s);};
+  var app=$("#app"), dados=null, pdf=null;
+  var esc=function(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});};
+  var norm=function(v){return String(v==null?"":v).normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().trim();};
+  var dinheiro=function(v){return v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});};
+  function numero(v){
+    if(typeof v==="number") return v>0?v:null;
+    var t=String(v==null?"":v).replace(/R\$|\s/gi,""); if(!t) return null;
+    if(t.indexOf(",")>=0) t=t.replace(/\./g,"").replace(",",".");
+    else if(/^\d{1,3}(\.\d{3})+$/.test(t)) t=t.replace(/\./g,"");
+    var n=Number(t); return isFinite(n)&&n>0?n:null;
+  }
+  async function rpc(nome, corpo){
+    var r;
+    try{ r=await fetch(API+nome,{method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+KEY,"Content-Type":"application/json"},body:JSON.stringify(corpo)}); }
+    catch(e){ throw new Error("Sem conexão. Confira a internet e tente de novo."); }
+    var t=await r.text(), j=null; try{ j=t?JSON.parse(t):null; }catch(e){}
+    if(!r.ok) throw new Error(j&&j.code==="P0001"?j.message:"Não foi possível concluir. Tente de novo em instantes.");
+    return j;
+  }
+  function falha(msg){ app.innerHTML='<div class="box"><div class="aviso err">'+esc(msg)+'</div></div>'; }
+
+  function desenhar(){
+    var R=dados.resposta||{}, limite=new Date(dados.expiraEm).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"});
+    app.innerHTML=
+      '<div class="box"><h2>'+esc(dados.fornecedor)+'</h2>'+
+        '<div>Pedido <b>'+esc(dados.protocolo)+'</b> · '+esc(dados.categoria)+' · entrega em '+esc(dados.municipio||"—")+(dados.tipo==="Emergencial"?' · <b>EMERGENCIAL</b>':'')+'</div>'+
+        '<div class="hint">Responda até <b>'+esc(limite)+'</b>. Até lá você pode corrigir e reenviar.</div>'+
+        (R.enviadoEm?'<div class="aviso ok">Resposta enviada em '+esc(new Date(R.enviadoEm).toLocaleString("pt-BR"))+'. Para corrigir, altere o que precisar e envie de novo.</div>':'')+
+      '</div>'+
+      '<div class="box"><h2>Preços</h2><div class="hint">Digite o valor unitário de cada item. Deixe em branco o que não for cotar. Se preferir, baixe a planilha, preencha e anexe aqui: os valores entram na tela para você conferir.</div>'+
+        '<div class="linha"><button type="button" class="btn sec" id="baixar">Baixar planilha</button><label class="drop" style="flex:1;min-width:220px"><input type="file" id="plan" accept=".xlsx,.xls,.ods,.csv">Anexar planilha preenchida</label></div>'+
+        '<div id="planMsg" class="hint" role="status"></div>'+
+        dados.itens.map(function(it,i){
+          var p=(R.precos||[])[i], m=(R.marcas||[])[i]||"";
+          return '<div class="item"><div class="nome"><b>'+(i+1)+'. '+esc(it.descricao)+'</b><div class="hint">'+esc(it.quantidade)+' '+esc(it.unidade)+(it.obs?' · '+esc(it.obs):'')+'</div></div>'+
+            '<input inputmode="decimal" data-preco="'+i+'" aria-label="Valor unitário do item '+(i+1)+'" placeholder="Valor unitário (R$)" value="'+(p!=null?String(p).replace(".",","):"")+'">'+
+            '<input data-marca="'+i+'" aria-label="Marca do item '+(i+1)+'" placeholder="Marca" maxlength="200" value="'+esc(m)+'">'+
+            '<div class="tot" id="tot'+i+'">—</div></div>';
+        }).join("")+
+        '<div class="linha"><span class="hint" id="qtos"></span><b id="total"></b></div></div>'+
+      '<div class="box"><h2>Condições</h2><div class="grid">'+
+        [["prazoEntrega","Prazo de entrega *","Ex.: 3 dias úteis"],["validade","Validade da proposta *","Ex.: 15 dias"],["pagamento","Condição de pagamento *","Ex.: 28 dias boleto"],["frete","Frete *","Ex.: CIF / incluso"]].map(function(c){
+          return '<label>'+c[1]+'<input id="c_'+c[0]+'" maxlength="200" placeholder="'+c[2]+'" value="'+esc(R[c[0]]||"")+'"></label>'; }).join("")+
+      '</div><label>Observações<textarea id="c_obs" maxlength="1000" rows="3">'+esc(R.obs||"")+'</textarea></label></div>'+
+      '<div class="box"><h2>Proposta em papel timbrado e assinada *</h2><div class="hint">Obrigatória. Somente PDF, até 10 MB, com carimbo e assinatura (manual ou digital).'+(R.anexoNome?' Já recebemos <b>'+esc(R.anexoNome)+'</b>; anexe de novo só se quiser substituir.':'')+'</div>'+
+        '<label class="drop"><input type="file" id="pdf" accept=".pdf,application/pdf"><span id="pdfNome">'+(R.anexoNome?'Trocar o PDF':'Anexar PDF')+'</span></label></div>'+
+      '<div class="box"><div id="msg" role="alert"></div><button type="button" class="btn" id="enviar">'+(R.enviadoEm?'Enviar correção':'Enviar cotação')+'</button></div>';
+    ligar(); somar();
+  }
+  function somar(){
+    var t=0,c=0;
+    dados.itens.forEach(function(it,i){ var v=numero($('[data-preco="'+i+'"]').value), q=Number(it.quantidade)||0;
+      $("#tot"+i).textContent=v!=null?dinheiro(v*q):"—"; if(v!=null){ t+=v*q; c++; } });
+    $("#qtos").textContent=c+" de "+dados.itens.length+" itens com preço"; $("#total").textContent="Total: "+dinheiro(t);
+  }
+  function ligar(){
+    document.querySelectorAll("[data-preco]").forEach(function(e){ e.oninput=somar; });
+    $("#baixar").onclick=baixarPlanilha;
+    $("#plan").onchange=function(e){ var f=e.target.files[0]; e.target.value=""; if(f) lerPlanilha(f); };
+    $("#pdf").onchange=async function(e){
+      var f=e.target.files[0]; if(!f) return; var m=$("#msg"); m.className=""; m.textContent="";
+      var cab=new Uint8Array(await f.slice(0,4).arrayBuffer());
+      if(String.fromCharCode.apply(null,cab)!=="%PDF"){ e.target.value=""; m.className="aviso err"; m.textContent="O arquivo precisa ser um PDF."; return; }
+      if(f.size>10*1024*1024){ e.target.value=""; m.className="aviso err"; m.textContent="Arquivo muito grande (máx. 10 MB)."; return; }
+      pdf=f; $("#pdfNome").textContent="📎 "+f.name;
+    };
+    $("#enviar").onclick=enviar;
+  }
+  function baixarPlanilha(){
+    if(!window.XLSX){ $("#planMsg").textContent="Não foi possível gerar a planilha. Recarregue a página."; return; }
+    var aoa=[["INSTITUTO SÃO VICENTE (ISV) · PEDIDO DE COTAÇÃO"],["Pedido: "+dados.protocolo],["Categoria: "+dados.categoria],["Local de entrega: "+(dados.municipio||"")],[],
+      ["FORNECEDOR:",dados.fornecedor],["PRAZO DE ENTREGA:",""],["VALIDADE DA PROPOSTA:",""],["CONDIÇÃO DE PAGAMENTO:",""],["FRETE:",""],[],
+      ["ITEM","PRODUTO","UNID","QUANT","VALOR UNITÁRIO (R$)","MARCA / OBSERVAÇÃO"]];
+    dados.itens.forEach(function(it,i){ aoa.push([i+1,it.descricao,it.unidade,it.quantidade,"",""]); });
+    var ws=XLSX.utils.aoa_to_sheet(aoa); ws["!cols"]=[{wch:24},{wch:52},{wch:12},{wch:10},{wch:22},{wch:28}];
+    var wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"COTAÇÃO");
+    XLSX.writeFile(wb,"Cotação "+dados.protocolo+" - ISV.xlsx");
+  }
+  async function lerPlanilha(file){
+    var aviso=$("#planMsg");
+    if(!window.XLSX){ aviso.textContent="Leitor de planilhas não carregou. Recarregue a página."; return; }
+    try{
+      var wb=XLSX.read(await file.arrayBuffer(),{type:"array"}), lidos=0, achou=false;
+      wb.SheetNames.forEach(function(nome){
+        var rows=XLSX.utils.sheet_to_json(wb.Sheets[nome],{header:1,defval:"",raw:true,blankrows:true}), h=-1, col={};
+        for(var r=0;r<Math.min(rows.length,40);r++){
+          var cells=rows[r].map(norm), linha=cells.join(" ").trim();
+          [[/^prazo de entrega/,"prazoEntrega"],[/^validade/,"validade"],[/^condic\w* de pagamento/,"pagamento"],[/^frete/,"frete"]].forEach(function(x){
+            if(!x[0].test(linha)) return;
+            var v=rows[r].map(function(a){return String(a).trim();}).filter(Boolean).slice(1).join(" ");
+            if(v) $("#c_"+x[1]).value=v.slice(0,200);
+          });
+          var d=cells.findIndex(function(a){return /produto|descri/.test(a);}), u=cells.findIndex(function(a){return /unitario|valor unit|preco unit/.test(a);});
+          if(d>=0&&u>=0){ h=r; col={d:d,u:u,n:cells.findIndex(function(a){return a==="item";}),m:cells.findIndex(function(a){return /marca/.test(a);})}; break; }
+        }
+        if(h<0) return; achou=true;
+        for(var k=h+1;k<rows.length;k++){
+          var row=rows[k], prod=norm(String(row[col.d]||"").replace(/\s*\(obs\.:.*\)\s*$/i,"")); if(!prod) continue;
+          var n=col.n>=0?Number(row[col.n]):NaN, idx=-1;
+          if(n>=1&&n<=dados.itens.length&&norm(dados.itens[n-1].descricao)===prod) idx=n-1;
+          if(idx<0) idx=dados.itens.findIndex(function(it){return norm(it.descricao)===prod;});
+          if(idx<0) continue;
+          var v=numero(row[col.u]); if(v!=null){ $('[data-preco="'+idx+'"]').value=String(v).replace(".",","); lidos++; }
+          if(col.m>=0&&String(row[col.m]).trim()) $('[data-marca="'+idx+'"]').value=String(row[col.m]).trim().slice(0,200);
+        }
+      });
+      somar();
+      aviso.textContent=!achou?"Não encontrei as colunas PRODUTO e VALOR UNITÁRIO. Use a planilha baixada aqui.":lidos+" de "+dados.itens.length+" preços lidos. Confira os valores e as condições antes de enviar.";
+    }catch(e){ aviso.textContent="Não foi possível ler a planilha."; }
+  }
+  async function enviar(){
+    var m=$("#msg"), b=$("#enviar"), erro=function(t){ m.className="aviso err"; m.textContent=t; };
+    document.querySelectorAll(".invalid").forEach(function(e){e.classList.remove("invalid");});
+    var ruins=[], precos=dados.itens.map(function(_,i){ var e=$('[data-preco="'+i+'"]'), v=numero(e.value); if(e.value.trim()&&v==null){ e.classList.add("invalid"); ruins.push(i+1); } return v; });
+    if(ruins.length) return erro("Valor inválido no(s) item(ns): "+ruins.join(", ")+". Deixe em branco o que não for cotar.");
+    if(!precos.some(function(v){return v!=null;})) return erro("Preencha o valor de pelo menos um item.");
+    var r={precos:precos, marcas:dados.itens.map(function(_,i){return $('[data-marca="'+i+'"]').value.trim();}), obs:$("#c_obs").value.trim()}, falta=false;
+    ["prazoEntrega","validade","pagamento","frete"].forEach(function(k){ var e=$("#c_"+k); r[k]=e.value.trim(); if(!r[k]){ e.classList.add("invalid"); falta=true; } });
+    if(falta) return erro("Preencha prazo de entrega, validade, pagamento e frete.");
+    if(!pdf && !(dados.resposta&&dados.resposta.anexoNome)) return erro("Anexe a proposta em papel timbrado e assinada (PDF).");
+    b.disabled=true; m.className="hint"; m.textContent="Enviando…";
+    try{
+      if(pdf){
+        var buf=new Uint8Array(await pdf.arrayBuffer()), bin=""; for(var i=0;i<buf.length;i+=0x8000) bin+=String.fromCharCode.apply(null,buf.subarray(i,i+0x8000));
+        var b64=btoa(bin), CH=180000, n=Math.ceil(b64.length/CH);
+        var envio=Array.from(crypto.getRandomValues(new Uint8Array(8)),function(x){return x.toString(16).padStart(2,"0");}).join("");
+        for(var p=0;p<n;p++){ m.textContent="Enviando o PDF ("+(p+1)+" de "+n+")…"; await rpc("cot_anexo",{p_token:TOKEN,p_envio:envio,p_parte:p,p_b64:b64.slice(p*CH,(p+1)*CH)}); }
+        r.anexo={envio:envio,partes:n,nome:pdf.name,tamanho:pdf.size};
+      }
+      await rpc("cot_enviar",{p_token:TOKEN,p_resposta:r});
+      pdf=null; dados=await rpc("cot_abrir",{p_token:TOKEN}); desenhar();
+      var ok=$("#msg"); ok.className="aviso ok"; ok.textContent="Cotação enviada ao Instituto São Vicente. Obrigado!"; ok.scrollIntoView({block:"center"});
+    }catch(e){ erro(e.message); b.disabled=false; }
+  }
+  async function iniciar(){
+    if(!/^[a-f0-9]{32}$/.test(TOKEN)) return falha("Link inválido. Abra o endereço completo que você recebeu.");
+    try{ dados=await rpc("cot_abrir",{p_token:TOKEN}); desenhar(); }catch(e){ falha(e.message); }
+  }
+  window.addEventListener("hashchange",function(){ location.reload(); });
+  iniciar();
+})();
+</script>
+</body>
+</html>
